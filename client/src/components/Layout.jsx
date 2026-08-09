@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
-import { Activity, FileWarning } from 'lucide-react'
+import { Activity, FileWarning, QrCode } from 'lucide-react'
+import QRCodeModal from './QRCodeModal.jsx'
 
 export default function Layout() {
+  const [showQrModal, setShowQrModal] = useState(false)
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50/30">
       <nav className="glass sticky top-0 z-50 border-b border-slate-200">
@@ -31,7 +35,15 @@ export default function Layout() {
               </NavLink>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setShowQrModal(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition-colors"
+              title="Open QR Code for Mobile Report"
+            >
+              <QrCode className="w-3.5 h-3.5 text-slate-600" />
+              <span className="hidden sm:inline">Scan QR</span>
+            </button>
             <NavLink
               to="/report"
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-red-50 text-emergency border border-red-200 hover:bg-red-100 transition-colors"
@@ -46,6 +58,8 @@ export default function Layout() {
       <main className="flex-1">
         <Outlet />
       </main>
+
+      <QRCodeModal isOpen={showQrModal} onClose={() => setShowQrModal(false)} />
     </div>
   )
 }
