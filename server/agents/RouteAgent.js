@@ -56,8 +56,8 @@ function generateFallbackRoute(from, to, avoidArea = null) {
 
   if (avoidArea) {
     // Bypass detour path (diverting around blocked bridge/road)
-    const midLat = (from[0] + to[0]) / 2 - 0.005
-    const midLon = (from[1] + to[1]) / 2 + 0.003
+    const midLat = (from[0] + to[0]) / 2 - 0.006
+    const midLon = (from[1] + to[1]) / 2 + 0.005
     waypoints.push([from[0] - 0.002, from[1] + 0.005])
     waypoints.push([midLat, midLon])
     waypoints.push([to[0] - 0.003, to[1] - 0.004])
@@ -72,7 +72,7 @@ function generateFallbackRoute(from, to, avoidArea = null) {
   // Calculate approximate straight-line + detour distance & duration
   const dLat = to[0] - from[0]
   const dLon = to[1] - from[1]
-  const approxDistanceMeters = Math.round(Math.sqrt(dLat * dLat + dLon * dLon) * 111000 * (avoidArea ? 1.4 : 1.1))
+  const approxDistanceMeters = Math.round(Math.sqrt(dLat * dLat + dLon * dLon) * 111000 * (avoidArea ? 1.45 : 1.1))
   const durationSeconds = Math.round(approxDistanceMeters / 8.33) // ~30 km/h average speed
 
   return {
@@ -86,7 +86,7 @@ function generateFallbackRoute(from, to, avoidArea = null) {
 }
 
 /**
- * Recomputes ambulance routes when a road or bridge is blocked
+ * Recomputes ambulance routes when a road or bridge is blocked, preserving old route geometry
  */
 export async function recomputeRoutes(worldState, blockedRoadId) {
   const affectedAmbulances = []
@@ -101,6 +101,9 @@ export async function recomputeRoutes(worldState, blockedRoadId) {
       affectedAmbulances.push(amb.id)
 
       const routeResult = await calculateRoute(amb.location, amb.route.to, avoidCoords)
+      const previousDuration = amb.route.duration || 360
+      const deltaDuration = routeResult.duration - previousDuration
+
       newRoutes[amb.id] = {
         from: amb.location,
         to: amb.route.to,
@@ -108,7 +111,12 @@ export async function recomputeRoutes(worldState, blockedRoadId) {
         duration: routeResult.duration,
         distance: routeResult.distance,
         rerouted: true,
-        previousDuration: amb.route.duration
+        previousDuration,
+        deltaDuration,
+        oldRoute: {
+          waypoints: amb.route.waypoints,
+          duration: previousDuration
+        }
       }
     }
   }

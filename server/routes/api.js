@@ -100,7 +100,7 @@ router.post('/report', async (req, res) => {
     changes.push({ action: 'BLOCK_ROAD', target: extracted.entityId })
 
     const routeResult = await recomputeRoutes(world.getState(), extracted.entityId)
-    const impactResult = computeImpact(world.getState(), extracted.entityId)
+    const impactResult = computeImpact(world.getState(), extracted.entityId, routeResult)
 
     for (const ambId of routeResult.affectedAmbulances) {
       if (routeResult.newRoutes[ambId]) {
@@ -114,12 +114,15 @@ router.post('/report', async (req, res) => {
       changes.push({ action: 'DEPLOY_TEAM', target: impactResult.teamAssignment.teamId })
     }
 
-    world.updateHospitalStatus(
-      impactResult.affectedHospitals[0],
-      5,
-      impactResult.overflowRisk ? 'overflow_warning' : 'normal'
-    )
-    changes.push({ action: 'HOSPITAL_LOAD', target: impactResult.affectedHospitals[0] })
+    if (impactResult.affectedHospitals && impactResult.affectedHospitals.length > 0) {
+      const targetHospId = impactResult.affectedHospitals[0]
+      world.updateHospitalStatus(
+        targetHospId,
+        impactResult.incomingSurge,
+        impactResult.newHospitalStatus
+      )
+      changes.push({ action: 'HOSPITAL_LOAD', target: targetHospId })
+    }
   }
 
   const newState = world.getState()
@@ -128,7 +131,7 @@ router.post('/report', async (req, res) => {
   req.io.emit('alert', {
     id: `alert-${Date.now()}`,
     level: 'critical',
-    message: `Incident: ${message.slice(0, 120)}`
+    message: `CRITICAL: Incident reported on ${extracted.entityId} — Multi-agent cascade active.`
   })
 
   res.json({ success: true, extracted, changes, state: newState })

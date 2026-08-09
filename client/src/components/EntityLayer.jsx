@@ -1,4 +1,5 @@
-import { Marker, Popup, Polyline, CircleMarker } from 'react-leaflet'
+import { useState, useEffect, useRef } from 'react'
+import { Marker, Popup, Polyline } from 'react-leaflet'
 import L from 'leaflet'
 import { useWorldState } from '../hooks/useWorldState.js'
 import {
@@ -17,6 +18,78 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
+
+/**
+ * Animated Ambulance Marker that smoothly progresses along its active route waypoints
+ */
+function AnimatedAmbulance({ amb }) {
+  const [currentPos, setCurrentPos] = useState(amb.location)
+  const waypointIndexRef = useRef(0)
+  const progressRef = useRef(0)
+
+  useEffect(() => {
+    const waypoints = amb.route?.waypoints
+
+    if (!waypoints || waypoints.length < 2 || amb.status !== 'enroute') {
+      setCurrentPos(amb.location)
+      return
+    }
+
+    // Reset waypoint tracking when route changes
+    waypointIndexRef.current = 0
+    progressRef.current = 0
+
+    const interval = setInterval(() => {
+      const wps = amb.route?.waypoints
+      if (!wps || wps.length < 2) return
+
+      const idx = waypointIndexRef.current
+      if (idx >= wps.length - 1) {
+        // Loop or stay at destination
+        setCurrentPos(wps[wps.length - 1])
+        return
+      }
+
+      const p1 = wps[idx]
+      const p2 = wps[idx + 1]
+
+      progressRef.current += 0.04
+
+      if (progressRef.current >= 1) {
+        progressRef.current = 0
+        waypointIndexRef.current = idx + 1
+        setCurrentPos(p2)
+      } else {
+        const lat = p1[0] + (p2[0] - p1[0]) * progressRef.current
+        const lon = p1[1] + (p2[1] - p1[1]) * progressRef.current
+        setCurrentPos([lat, lon])
+      }
+    }, 100)
+
+    return () => clearInterval(interval)
+  }, [amb.route, amb.location, amb.status])
+
+  return (
+    <Marker position={currentPos} icon={ambulanceIcon}>
+      <Popup>
+        <div className="text-xs space-y-1">
+          <div className="font-bold text-intel flex items-center gap-1">
+            <span>🚑</span> Unit {amb.callSign}
+          </div>
+          <div>Status: <span className="font-semibold text-slate-800">{amb.status.toUpperCase()}</span></div>
+          {amb.route?.duration && (
+            <div>ETA: <span className="font-semibold text-slate-800">{Math.round(amb.route.duration / 60)} mins</span></div>
+          )}
+          {amb.route?.rerouted && (
+            <div className="pill bg-blue-100 text-intel font-semibold mt-1">
+              🔄 REROUTE ACTIVE
+            </div>
+          )}
+        </div>
+      </Popup>
+    </Marker>
+  )
+}
 
 export default function EntityLayer() {
   const { worldState } = useWorldState()
@@ -81,31 +154,32 @@ export default function EntityLayer() {
           icon={hosp.status === 'overflow_warning' ? hospitalWarningIcon : hospitalIcon}
         >
           <Popup>
-            <strong>{hosp.name}</strong><br />
-            Capacity: {hosp.capacity.current}/{hosp.capacity.total}<br />
-            Incoming: +{hosp.capacity.incoming}<br />
-            Status: <span style={{ color: hosp.status === 'overflow_warning' ? '#DC2626' : '#16a34a' }}>{hosp.status}</span>
+            <div className="text-xs space-y-1">
+              <div className="font-bold text-slate-900">{hosp.name}</div>
+              <div>Capacity: <span className="font-semibold">{hosp.capacity.current}/{hosp.capacity.total}</span></div>
+              {hosp.capacity.incoming > 0 && (
+                <div className="text-red-600 font-semibold">Incoming Surge: +{hosp.capacity.incoming}</div>
+              )}
+              <div>Status: <span className={`font-semibold ${hosp.status === 'overflow_warning' ? 'text-red-600' : 'text-emerald-600'}`}>{hosp.status.toUpperCase()}</span></div>
+            </div>
           </Popup>
         </Marker>
       ))}
 
-      {/* Ambulances */}
+      {/* Ambulances with Smooth GPS Animation */}
       {worldState.ambulances?.map(amb => (
-        <Marker key={amb.id} position={amb.location} icon={ambulanceIcon}>
-          <Popup>
-            <strong>{amb.callSign}</strong><br />
-            Status: {amb.status}
-          </Popup>
-        </Marker>
+        <AnimatedAmbulance key={amb.id} amb={amb} />
       ))}
 
       {/* Rescue Teams */}
       {worldState.rescueTeams?.map(team => (
         <Marker key={team.id} position={team.location} icon={teamIcon}>
           <Popup>
-            <strong>{team.name}</strong><br />
-            Status: {team.status}<br />
-            Task: {team.assignedTask || 'None'}
+            <div className="text-xs space-y-1">
+              <div className="font-bold text-slate-900">{team.name}</div>
+              <div>Status: <span className="font-semibold text-amber-700">{team.status.toUpperCase()}</span></div>
+              <div>Task: <span className="font-semibold text-slate-700">{team.assignedTask || 'Standby'}</span></div>
+            </div>
           </Popup>
         </Marker>
       ))}
