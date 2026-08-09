@@ -9,6 +9,39 @@ router.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
+router.get('/state', (req, res) => {
+  res.json({ success: true, state: req.world.getState() })
+})
+
+router.post('/roads/:id/block', (req, res) => {
+  const { id } = req.params
+  const propagation = req.world.blockRoad(id, req.body.source || 'manual_api')
+  const newState = req.world.getState()
+
+  req.io.emit('state:updated', newState)
+  req.io.emit('alert', {
+    id: `alert-${Date.now()}`,
+    level: 'warning',
+    message: `Road/Bridge ${id} status updated to BLOCKED.`
+  })
+
+  res.json({ success: true, propagation, state: newState })
+})
+
+router.post('/roads/:id/unblock', (req, res) => {
+  const { id } = req.params
+  const newState = req.world.unblockRoad(id, req.body.source || 'manual_api')
+
+  req.io.emit('state:updated', newState)
+  req.io.emit('alert', {
+    id: `alert-${Date.now()}`,
+    level: 'info',
+    message: `Road/Bridge ${id} status restored to OPEN.`
+  })
+
+  res.json({ success: true, state: newState })
+})
+
 router.post('/route', async (req, res) => {
   const { coordinates, from, to, avoid } = req.body
 

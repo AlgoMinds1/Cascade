@@ -1,3 +1,6 @@
+/**
+ * WorldState — Singleton in-memory graph representing the disaster command world.
+ */
 class WorldStateClass {
   constructor() {
     this.data = this.getInitialSeed()
@@ -59,7 +62,9 @@ class WorldStateClass {
               [19.0760, 72.8760],
               [19.0820, 72.8890]
             ],
-            duration: 360
+            duration: 360,
+            distance: 2700,
+            rerouted: false
           }
         },
         {
@@ -86,64 +91,192 @@ class WorldStateClass {
           assignedTask: null
         }
       ],
-      events: []
+      events: [
+        {
+          id: 'evt-init',
+          timestamp: new Date().toISOString(),
+          type: 'SYSTEM_READY',
+          description: 'Cascade Command World State Engine initialized.',
+          source: 'system',
+          affectedEntities: []
+        }
+      ]
     }
   }
 
+  /**
+   * Returns a deep-cloned snapshot of the current state
+   */
   getState() {
     return JSON.parse(JSON.stringify(this.data))
   }
 
+  /**
+   * Resets world state to initial seed
+   */
   reset() {
     this.data = this.getInitialSeed()
     return this.getState()
   }
 
-  blockRoad(roadId) {
+  /**
+   * Blocks a road or bridge by ID and triggers propagation
+   */
+  blockRoad(roadId, source = 'system') {
     const road = this.data.roads.find(r => r.id === roadId)
     if (road) {
       road.status = 'blocked'
-      this.addEvent('ROAD_BLOCKED', `${road.name} is now blocked`, [roadId])
+      this.addEvent(
+        'ROAD_BLOCKED',
+        `${road.name} (${road.type}) is now BLOCKED.`,
+        source,
+        [roadId]
+      )
+      return this.propagate(roadId)
+    }
+    return { affectedEntities: [], state: this.getState() }
+  }
+
+  /**
+   * Unblocks a road or bridge by ID
+   */
+  unblockRoad(roadId, source = 'system') {
+    const road = this.data.roads.find(r => r.id === roadId)
+    if (road) {
+      road.status = 'open'
+      this.addEvent(
+        'ROAD_OPENED',
+        `${road.name} is now OPEN for traffic.`,
+        source,
+        [roadId]
+      )
     }
     return this.getState()
   }
 
-  addEvent(type, description, affectedEntities = []) {
+  /**
+   * Propagation engine: analyzes state graph and identifies affected entities
+   */
+  propagate(entityId) {
+    const affectedAmbulances = []
+    const affectedHospitals = []
+    const affectedTeams = []
+
+    // 1. Ambulances with active routes intersecting or leading across entity
+    for (const amb of this.data.ambulances) {
+      if (amb.status === 'enroute' && amb.route) {
+        affectedAmbulances.push(amb.id)
+      }
+    }
+
+    // 2. Identify nearest hospital
+    if (this.data.hospitals.length > 0) {
+      affectedHospitals.push(this.data.hospitals[0].id)
+    }
+
+    // 3. Identify idle rescue teams
+    for (const team of this.data.rescueTeams) {
+      if (team.status === 'idle') {
+        affectedTeams.push(team.id)
+      }
+    }
+
+    return {
+      entityId,
+      affectedAmbulances,
+      affectedHospitals,
+      affectedTeams,
+      state: this.getState()
+    }
+  }
+
+  /**
+   * Appends an event to the chronological feed (caps at 50)
+   */
+  addEvent(type, description, source = 'system', affectedEntities = []) {
     this.data.events.unshift({
-      id: `evt-${Date.now()}`,
+      id: `evt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       timestamp: new Date().toISOString(),
       type,
       description,
+      source,
       affectedEntities
     })
-    // Keep max 50
+
     if (this.data.events.length > 50) {
       this.data.events = this.data.events.slice(0, 50)
     }
   }
 
+  /**
+   * Updates an ambulance route
+   */
   updateAmbulanceRoute(ambId, route) {
     const amb = this.data.ambulances.find(a => a.id === ambId)
     if (amb) {
       amb.route = route
       amb.status = 'enroute'
+      this.addEvent(
+        'REROUTE',
+        `Ambulance ${amb.callSign} rerouted via bypass (ETA: ${Math.round(route.duration / 60)}m).`,
+        'system',
+        [ambId]
+      )
     }
   }
 
-  updateHospitalStatus(hospId, incomingDelta, status) {
+  /**
+   * Updates hospital incoming patient count and overflow warning status
+   */
+  updateHospitalStatus(hospId, incomingDelta = 0, status = null) {
     const hosp = this.data.hospitals.find(h => h.id === hospId)
     if (hosp) {
       hosp.capacity.incoming = Math.max(0, hosp.capacity.incoming + incomingDelta)
       if (status) hosp.status = status
+
+      const totalOccupied = hosp.capacity.current + hosp.capacity.incoming
+      const loadPercent = Math.round((totalOccupied / hosp.capacity.total) * 100)
+
+      this.addEvent(
+        'HOSPITAL_UPDATE',
+        `${hosp.name} load updated to ${loadPercent}% (${totalOccupied}/${hosp.capacity.total}).`,
+        'system',
+        [hospId]
+      )
     }
   }
 
+  /**
+   * Deploys a rescue team to a task
+   */
   assignTeam(teamId, task) {
     const team = this.data.rescueTeams.find(t => t.id === teamId)
     if (team) {
       team.status = 'deployed'
       team.assignedTask = task
+      this.addEvent(
+        'TEAM_DEPLOYED',
+        `Rescue Team ${team.name} deployed to ${task}.`,
+        'system',
+        [teamId]
+      )
     }
+  }
+
+  getRoad(id) {
+    return this.data.roads.find(r => r.id === id)
+  }
+
+  getHospital(id) {
+    return this.data.hospitals.find(h => h.id === id)
+  }
+
+  getAmbulance(id) {
+    return this.data.ambulances.find(a => a.id === id)
+  }
+
+  getRescueTeam(id) {
+    return this.data.rescueTeams.find(t => t.id === id)
   }
 }
 

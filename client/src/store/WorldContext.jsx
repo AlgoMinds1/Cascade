@@ -6,9 +6,13 @@ export function WorldProvider({ children }) {
   const [worldState, setWorldState] = useState(null)
   const [alerts, setAlerts] = useState([])
   const [events, setEvents] = useState([])
+  const [isConnected, setIsConnected] = useState(false)
 
   const updateState = useCallback((snapshot) => {
     setWorldState(snapshot)
+    if (snapshot?.events && Array.isArray(snapshot.events)) {
+      setEvents(snapshot.events)
+    }
   }, [])
 
   const addAlert = useCallback((alert) => {
@@ -19,8 +23,24 @@ export function WorldProvider({ children }) {
     setEvents(prev => [evt, ...prev].slice(0, 50))
   }, [])
 
+  const clearAlert = useCallback((alertId) => {
+    setAlerts(prev => prev.filter(a => a.id !== alertId))
+  }, [])
+
   return (
-    <WorldContext.Provider value={{ worldState, alerts, events, updateState, addAlert, addEvent }}>
+    <WorldContext.Provider
+      value={{
+        worldState,
+        alerts,
+        events,
+        isConnected,
+        setIsConnected,
+        updateState,
+        addAlert,
+        addEvent,
+        clearAlert
+      }}
+    >
       {children}
     </WorldContext.Provider>
   )

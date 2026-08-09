@@ -25,34 +25,53 @@ export default function EntityLayer() {
   return (
     <>
       {/* Roads / Bridges */}
-      {worldState.roads?.map(road => (
-        road.coords && road.coords.length >= 2 ? (
-          <Polyline
-            key={road.id}
-            positions={road.coords}
-            pathOptions={{
-              color: road.status === 'blocked' ? '#DC2626' : '#64748B',
-              weight: road.type === 'bridge' ? 5 : 3,
-              dashArray: road.status === 'blocked' ? '8 4' : null,
-              opacity: 0.85
-            }}
-          >
-            <Popup>
-              <strong>{road.name}</strong><br />
-              Status: <span style={{ color: road.status === 'blocked' ? '#DC2626' : '#16a34a' }}>{road.status.toUpperCase()}</span>
-            </Popup>
-          </Polyline>
-        ) : road.coords && road.coords.length === 1 ? (
-          <CircleMarker
-            key={road.id}
-            center={road.coords[0]}
-            radius={8}
-            pathOptions={{ color: road.status === 'blocked' ? '#DC2626' : '#64748B', fillOpacity: 0.7 }}
-          >
-            <Popup><strong>{road.name}</strong><br />Status: {road.status}</Popup>
-          </CircleMarker>
-        ) : null
-      ))}
+      {worldState.roads?.map(road => {
+        const isBlocked = road.status === 'blocked'
+        const isBridge = road.type === 'bridge'
+        const hasCoords = road.coords && road.coords.length >= 2
+        const midPoint = hasCoords
+          ? road.coords[Math.floor(road.coords.length / 2)]
+          : null
+
+        return (
+          <div key={`road-group-${road.id}`}>
+            {hasCoords ? (
+              <Polyline
+                positions={road.coords}
+                pathOptions={{
+                  color: isBlocked ? '#DC2626' : isBridge ? '#334155' : '#64748B',
+                  weight: isBridge ? 6 : 4,
+                  dashArray: isBlocked ? '8 5' : null,
+                  opacity: isBlocked ? 0.95 : 0.85
+                }}
+              >
+                <Popup>
+                  <div className="text-xs space-y-1">
+                    <div className="font-bold text-slate-900">{road.name} ({road.type.toUpperCase()})</div>
+                    <div>Status: <span className={`font-semibold ${isBlocked ? 'text-red-600' : 'text-emerald-600'}`}>{road.status.toUpperCase()}</span></div>
+                  </div>
+                </Popup>
+              </Polyline>
+            ) : null}
+
+            {/* Dedicated Bridge Arch / Blocked Icon at Midpoint */}
+            {isBridge && midPoint ? (
+              <Marker
+                position={midPoint}
+                icon={isBlocked ? bridgeBlockedIcon : bridgeIcon}
+              >
+                <Popup>
+                  <div className="text-xs space-y-1">
+                    <div className="font-bold text-slate-900">{road.name}</div>
+                    <div>Infrastructure Type: Bridge</div>
+                    <div>Status: <span className={`font-semibold ${isBlocked ? 'text-red-600' : 'text-emerald-600'}`}>{road.status.toUpperCase()}</span></div>
+                  </div>
+                </Popup>
+              </Marker>
+            ) : null}
+          </div>
+        )
+      })}
 
       {/* Hospitals */}
       {worldState.hospitals?.map(hosp => (
