@@ -1,12 +1,48 @@
 import { Router } from 'express'
 import { extractEntities } from '../agents/ExtractionAgent.js'
-import { recomputeRoutes } from '../agents/RouteAgent.js'
+import { recomputeRoutes, calculateRoute } from '../agents/RouteAgent.js'
 import { computeImpact } from '../agents/ImpactAgent.js'
 
 const router = Router()
 
 router.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+router.post('/route', async (req, res) => {
+  const { coordinates, from, to, avoid } = req.body
+
+  let origin = null
+  let destination = null
+
+  if (coordinates && Array.isArray(coordinates) && coordinates.length >= 2) {
+    // Check if coordinates format is [[lon, lat], [lon, lat]] (OSRM standard) or [[lat, lon], [lat, lon]]
+    const c1 = coordinates[0]
+    const c2 = coordinates[1]
+    // If first element looks like longitude (> 50 for India/Mumbai) vs latitude (~19)
+    if (c1[0] > 50 && c1[1] < 50) {
+      origin = [c1[1], c1[0]]
+      destination = [c2[1], c2[0]]
+    } else {
+      origin = [c1[0], c1[1]]
+      destination = [c2[0], c2[1]]
+    }
+  } else if (from && to) {
+    origin = from
+    destination = to
+  } else {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid coordinates. Expected { coordinates: [[lon,lat], [lon,lat]] } or { from: [lat,lon], to: [lat,lon] }'
+    })
+  }
+
+  try {
+    const route = await calculateRoute(origin, destination, avoid)
+    return res.json({ success: true, route })
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message })
+  }
 })
 
 router.post('/report', async (req, res) => {

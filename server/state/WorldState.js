@@ -11,7 +11,7 @@ class WorldStateClass {
           name: 'Road 17',
           type: 'road',
           status: 'open',
-          coords: [[19.0700, 72.8700], [19.0800, 72.8800]]
+          coords: [[19.0700, 72.8700], [19.0740, 72.8740], [19.0760, 72.8760], [19.0820, 72.8890]]
         },
         {
           id: 'bridge-17',
@@ -19,6 +19,13 @@ class WorldStateClass {
           type: 'bridge',
           status: 'open',
           coords: [[19.0740, 72.8740], [19.0760, 72.8760]]
+        },
+        {
+          id: 'road-south',
+          name: 'South Avenue',
+          type: 'road',
+          status: 'open',
+          coords: [[19.0610, 72.8610], [19.0680, 72.8750], [19.0700, 72.8700]]
         }
       ],
       hospitals: [
@@ -42,6 +49,30 @@ class WorldStateClass {
           id: 'amb-1',
           callSign: 'A1',
           location: [19.0700, 72.8700],
+          status: 'enroute',
+          route: {
+            from: [19.0700, 72.8700],
+            to: [19.0820, 72.8890],
+            waypoints: [
+              [19.0700, 72.8700],
+              [19.0740, 72.8740],
+              [19.0760, 72.8760],
+              [19.0820, 72.8890]
+            ],
+            duration: 360
+          }
+        },
+        {
+          id: 'amb-2',
+          callSign: 'A2',
+          location: [19.0610, 72.8610],
+          status: 'idle',
+          route: null
+        },
+        {
+          id: 'amb-3',
+          callSign: 'A3',
+          location: [19.0780, 72.8850],
           status: 'idle',
           route: null
         }
