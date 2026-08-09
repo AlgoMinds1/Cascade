@@ -10,6 +10,7 @@ export default {
         emergency: '#DC2626',
         intel: '#2563EB',
         warning: '#F59E0B',
+        amber: '#F59E0B',
         surface: '#FFFFFF',
         bg: '#FAFBFC',
       },
