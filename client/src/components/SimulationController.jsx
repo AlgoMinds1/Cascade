@@ -1,192 +1,287 @@
-import { useState, useEffect, useRef } from 'react'
-import { Play, Square, RotateCcw, Loader2, Zap, CheckCircle } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
+import { Play, Pause, Square, RotateCcw, Loader2, Zap, CheckCircle, AlertCircle, ChevronRight } from 'lucide-react'
 import { useWorld } from '../store/WorldContext.jsx'
+import simulationData from '../data/simulationData.json'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const REPORTS = simulationData.reports
 
-const DEMO_SCENARIOS = [
-  { label: 'Bridge 17 Collapse', message: 'Bridge 17 has collapsed and is completely blocked' },
-  { label: 'Road 17 Flooded', message: 'Road 17 is flooded and impassable for ambulances' },
-  { label: 'South Ave Fire', message: 'Major fire breakout spotted near South Avenue' },
-  { label: 'Bridge Damaged', message: 'Road seventeen bridge is damaged and closed to all traffic' },
-]
+// State machine states
+const SIM_STATE = { IDLE: 'idle', PLAYING: 'playing', PAUSED: 'paused' }
 
-const INTERVAL_MS = 3000
+async function postReport(report) {
+  const res = await fetch(`${API_URL}/api/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: report.message, source: report.source })
+  })
+  return res.json()
+}
 
-export default function SimulationController() {
+async function postReset() {
+  await fetch(`${API_URL}/api/reset`, { method: 'POST' })
+}
+
+/**
+ * SimulationController — Play/Pause/Reset choreographed 12-step demo.
+ * Exposes play(), pause(), reset() via ref for keyboard shortcut integration.
+ */
+const SimulationController = forwardRef(function SimulationController(_, ref) {
   const { setSimRunning } = useWorld()
-  const [loading, setLoading] = useState(null)
+  const [simState, setSimState] = useState(SIM_STATE.IDLE)
+  const [currentStep, setCurrentStep] = useState(-1) // -1 = not started
+  const [stepStatus, setStepStatus] = useState({}) // { [stepIndex]: 'ok' | 'err' | 'pending' }
   const [resetLoading, setResetLoading] = useState(false)
-  const [lastAction, setLastAction] = useState(null)
-  const [simActive, setSimActive] = useState(false)
-  const [simIndex, setSimIndex] = useState(0)
-  const [stepStatus, setStepStatus] = useState(null) // 'ok' | 'err'
-  const intervalRef = useRef(null)
-  const idxRef = useRef(0)
+  const timerRef = useRef(null)
+  const stepRef = useRef(-1)  // track step in closure
+  const stateRef = useRef(SIM_STATE.IDLE)
 
-  // Sync sim state to WorldContext for Layout nav pill
+  // Sync sim state to global context for nav pill
   useEffect(() => {
-    setSimRunning(simActive)
-  }, [simActive, setSimRunning])
+    setSimRunning(simState === SIM_STATE.PLAYING)
+  }, [simState, setSimRunning])
 
-  // Auto-play interval
-  useEffect(() => {
-    if (!simActive) {
-      clearInterval(intervalRef.current)
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }
+
+  const fireStep = useCallback(async (index) => {
+    if (index >= REPORTS.length) {
+      // Sequence complete
+      setSimState(SIM_STATE.IDLE)
+      stateRef.current = SIM_STATE.IDLE
+      stepRef.current = -1
       return
     }
 
-    const fire = async () => {
-      const scenario = DEMO_SCENARIOS[idxRef.current % DEMO_SCENARIOS.length]
-      idxRef.current = (idxRef.current + 1) % DEMO_SCENARIOS.length
-      setSimIndex(idxRef.current)
+    stepRef.current = index
+    setCurrentStep(index)
+    setStepStatus(prev => ({ ...prev, [index]: 'pending' }))
 
-      setLoading(scenario.label)
-      setStepStatus(null)
-      try {
-        const res = await fetch(`${API_URL}/api/report`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: scenario.message, source: 'simulation' })
-        })
-        const data = await res.json()
-        setLastAction(data.success ? scenario.label : 'Error')
-        setStepStatus(data.success ? 'ok' : 'err')
-      } catch {
-        setLastAction('Server unreachable')
-        setStepStatus('err')
-      } finally {
-        setLoading(null)
-      }
+    try {
+      const data = await postReport(REPORTS[index])
+      setStepStatus(prev => ({ ...prev, [index]: data.success ? 'ok' : 'err' }))
+    } catch {
+      setStepStatus(prev => ({ ...prev, [index]: 'err' }))
     }
 
-    fire() // fire immediately on start
-    intervalRef.current = setInterval(fire, INTERVAL_MS)
-    return () => clearInterval(intervalRef.current)
-  }, [simActive])
+    // Schedule next step if still playing
+    const nextIndex = index + 1
+    if (nextIndex < REPORTS.length && stateRef.current === SIM_STATE.PLAYING) {
+      const delay = (REPORTS[nextIndex].delaySeconds ?? 5) * 1000
+      timerRef.current = setTimeout(() => {
+        if (stateRef.current === SIM_STATE.PLAYING) {
+          fireStep(nextIndex)
+        }
+      }, delay)
+    } else if (nextIndex >= REPORTS.length) {
+      setSimState(SIM_STATE.IDLE)
+      stateRef.current = SIM_STATE.IDLE
+    }
+  }, [])
 
-  const toggleSim = () => {
-    if (simActive) {
-      setSimActive(false)
-      setLastAction(null)
-      setStepStatus(null)
+  const play = useCallback(() => {
+    if (stateRef.current === SIM_STATE.PLAYING) return
+    const resumeFrom = stateRef.current === SIM_STATE.PAUSED
+      ? stepRef.current + 1
+      : 0
+
+    if (resumeFrom >= REPORTS.length) return // Already finished
+
+    stateRef.current = SIM_STATE.PLAYING
+    setSimState(SIM_STATE.PLAYING)
+
+    if (!resumeFrom && stepRef.current === -1) {
+      // Fresh start — fire immediately
+      fireStep(0)
     } else {
-      idxRef.current = 0
-      setSimIndex(0)
-      setSimActive(true)
+      // Resuming from pause — fire next step immediately
+      fireStep(resumeFrom)
     }
-  }
+  }, [fireStep])
 
-  const runSingle = async (scenario) => {
-    if (simActive) return
-    setLoading(scenario.label)
-    setStepStatus(null)
-    try {
-      const res = await fetch(`${API_URL}/api/report`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: scenario.message, source: 'simulation' })
-      })
-      const data = await res.json()
-      setLastAction(data.success ? scenario.label : 'Failed')
-      setStepStatus(data.success ? 'ok' : 'err')
-    } catch {
-      setLastAction('Server unreachable')
-      setStepStatus('err')
-    } finally {
-      setLoading(null)
-    }
-  }
+  const pause = useCallback(() => {
+    if (stateRef.current !== SIM_STATE.PLAYING) return
+    clearTimer()
+    stateRef.current = SIM_STATE.PAUSED
+    setSimState(SIM_STATE.PAUSED)
+  }, [])
 
-  const handleReset = async () => {
-    if (simActive) setSimActive(false)
+  const toggle = useCallback(() => {
+    if (stateRef.current === SIM_STATE.PLAYING) pause()
+    else play()
+  }, [play, pause])
+
+  const reset = useCallback(async () => {
+    clearTimer()
+    stateRef.current = SIM_STATE.IDLE
+    stepRef.current = -1
+    setSimState(SIM_STATE.IDLE)
+    setCurrentStep(-1)
+    setStepStatus({})
     setResetLoading(true)
-    setStepStatus(null)
-    try {
-      await fetch(`${API_URL}/api/reset`, { method: 'POST' })
-      setLastAction('World state reset')
-      setStepStatus('ok')
-    } catch {
-      setLastAction('Reset failed')
-      setStepStatus('err')
-    } finally {
-      setResetLoading(false)
-    }
-  }
+    try { await postReset() } catch { /* ignore */ }
+    setResetLoading(false)
+  }, [])
+
+  // Expose imperative handle for keyboard shortcuts
+  useImperativeHandle(ref, () => ({ play, pause, toggle, reset }), [play, pause, toggle, reset])
+
+  // Cleanup on unmount
+  useEffect(() => () => clearTimer(), [])
+
+  const isPlaying = simState === SIM_STATE.PLAYING
+  const isPaused = simState === SIM_STATE.PAUSED
+  const isIdle = simState === SIM_STATE.IDLE
+  const progressPct = currentStep >= 0 ? Math.round(((currentStep + 1) / REPORTS.length) * 100) : 0
+  const isTriggerStep = currentStep === simulationData.meta.triggerIndex
 
   return (
-    <div className={`card px-4 py-2.5 flex items-center gap-3 flex-wrap transition-all duration-300 ${
-      simActive ? 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-400/30 shadow-sm' : ''
+    <div className={`card transition-all duration-300 overflow-hidden ${
+      isPlaying ? 'border-amber-300 ring-1 ring-amber-400/40 shadow-sm' :
+      isPaused  ? 'border-blue-300 ring-1 ring-blue-400/30' : ''
     }`}>
-      {/* Label */}
-      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex-shrink-0">
-        Simulate:
-      </span>
 
-      {/* Auto-play toggle */}
-      <button
-        onClick={toggleSim}
-        disabled={resetLoading}
-        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all duration-200 flex-shrink-0 ${
-          simActive
-            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400 shadow-sm hover:from-amber-600 hover:to-orange-600'
-            : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
-        }`}
-      >
-        {simActive
-          ? <><Square className="w-3 h-3" /> Stop Auto</>
-          : <><Zap className="w-3 h-3" /> Auto Play</>
-        }
-      </button>
+      {/* ── Progress Bar ────────────────────────────────── */}
+      <div className="h-1 bg-slate-100 w-full">
+        <div
+          className={`h-full transition-all duration-500 ease-out ${
+            isTriggerStep
+              ? 'bg-gradient-to-r from-red-500 to-orange-500'
+              : isPlaying
+              ? 'bg-gradient-to-r from-amber-400 to-amber-500'
+              : isPaused
+              ? 'bg-gradient-to-r from-blue-400 to-blue-500'
+              : 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+          }`}
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
 
-      {/* Divider */}
-      <div className="w-px h-5 bg-slate-200 flex-shrink-0" />
+      {/* ── Main Controls Row ───────────────────────────── */}
+      <div className="px-4 py-2.5 flex items-center gap-2.5 flex-wrap">
 
-      {/* Manual scenario buttons */}
-      {DEMO_SCENARIOS.slice(0, 2).map(s => (
-        <button
-          key={s.label}
-          onClick={() => runSingle(s)}
-          disabled={!!loading || simActive}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-40 transition-colors"
-        >
-          {loading === s.label
-            ? <Loader2 className="w-3 h-3 animate-spin" />
-            : <Play className="w-3 h-3" />
-          }
-          {s.label}
-        </button>
-      ))}
-
-      <div className="flex-1" />
-
-      {/* Status */}
-      {lastAction && (
-        <span className={`text-xs flex items-center gap-1 flex-shrink-0 ${
-          stepStatus === 'ok' ? 'text-emerald-600' : stepStatus === 'err' ? 'text-red-500' : 'text-slate-500'
-        }`}>
-          {stepStatus === 'ok' && <CheckCircle className="w-3 h-3" />}
-          {lastAction}
+        {/* State label */}
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex-shrink-0">
+          Demo Script
         </span>
-      )}
 
-      {/* Sim progress indicator */}
-      {simActive && (
-        <div className="flex items-center gap-1.5 text-[11px] text-amber-700 font-semibold flex-shrink-0">
-          <Loader2 className="w-3 h-3 animate-spin" />
-          Step {simIndex + 1}/{DEMO_SCENARIOS.length}
+        {/* Play / Pause */}
+        <button
+          onClick={toggle}
+          disabled={resetLoading || (isIdle && currentStep >= REPORTS.length - 1)}
+          title={isPlaying ? 'Pause (Space)' : 'Play (S)'}
+          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all duration-200 flex-shrink-0 ${
+            isPlaying
+              ? 'bg-amber-500 text-white border-amber-400 hover:bg-amber-600 shadow-sm'
+              : isPaused
+              ? 'bg-blue-500 text-white border-blue-400 hover:bg-blue-600 shadow-sm'
+              : 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-emerald-500 hover:from-emerald-600 hover:to-emerald-700 shadow-sm'
+          }`}
+        >
+          {isPlaying
+            ? <><Pause className="w-3 h-3" /> Pause</>
+            : isPaused
+            ? <><Play className="w-3 h-3" /> Resume</>
+            : <><Zap className="w-3 h-3" /> Play Demo</>
+          }
+        </button>
+
+        {/* Reset */}
+        <button
+          onClick={reset}
+          disabled={resetLoading}
+          title="Reset World (R)"
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 disabled:opacity-50 transition-all border border-slate-200 flex-shrink-0"
+        >
+          {resetLoading
+            ? <Loader2 className="w-3 h-3 animate-spin" />
+            : <RotateCcw className="w-3 h-3" />
+          }
+          Reset
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-slate-200 flex-shrink-0" />
+
+        {/* Current step label */}
+        {currentStep >= 0 && currentStep < REPORTS.length ? (
+          <div className={`flex items-center gap-1.5 text-xs flex-shrink-0 min-w-0 ${
+            isTriggerStep ? 'text-red-600 font-bold' : 'text-slate-700'
+          }`}>
+            {stepStatus[currentStep] === 'pending' && <Loader2 className="w-3 h-3 animate-spin flex-shrink-0 text-amber-500" />}
+            {stepStatus[currentStep] === 'ok'      && <CheckCircle className="w-3 h-3 flex-shrink-0 text-emerald-500" />}
+            {stepStatus[currentStep] === 'err'     && <AlertCircle className="w-3 h-3 flex-shrink-0 text-red-500" />}
+            <span className="truncate max-w-[160px] font-medium">
+              {REPORTS[currentStep].label}
+            </span>
+            {currentStep + 1 < REPORTS.length && isPlaying && (
+              <span className="text-slate-400 flex-shrink-0 flex items-center gap-0.5">
+                <ChevronRight className="w-3 h-3" />
+                <span className="text-[10px]">{REPORTS[currentStep + 1]?.label}</span>
+              </span>
+            )}
+          </div>
+        ) : isIdle && currentStep === -1 ? (
+          <span className="text-xs text-slate-400 flex-shrink-0">
+            12 scripted reports — Press S to start
+          </span>
+        ) : (
+          <span className="text-xs text-emerald-600 font-semibold flex-shrink-0 flex items-center gap-1">
+            <CheckCircle className="w-3 h-3" /> Demo complete
+          </span>
+        )}
+
+        <div className="flex-1" />
+
+        {/* Step counter */}
+        <span className="text-[10px] font-mono text-slate-400 flex-shrink-0 tabular-nums">
+          {currentStep >= 0 ? `${currentStep + 1}/${REPORTS.length}` : `0/${REPORTS.length}`}
+        </span>
+
+        {/* Keyboard hint */}
+        <div className="hidden sm:flex items-center gap-1 text-[10px] text-slate-300 flex-shrink-0">
+          <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">S</kbd>
+          <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">Space</kbd>
+          <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">R</kbd>
         </div>
-      )}
+      </div>
 
-      {/* Reset */}
-      <button
-        onClick={handleReset}
-        disabled={resetLoading}
-        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-50 transition-colors border border-slate-200 flex-shrink-0"
-      >
-        {resetLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-        Reset
-      </button>
+      {/* ── Step Dots ───────────────────────────────────── */}
+      <div className="px-4 pb-2.5 flex items-center gap-1 overflow-x-auto">
+        {REPORTS.map((report, i) => {
+          const status = stepStatus[i]
+          const isActive = i === currentStep
+          const isDone = status === 'ok'
+          const isErr = status === 'err'
+          const isTrigger = i === simulationData.meta.triggerIndex
+
+          return (
+            <div
+              key={report.id}
+              title={`Step ${i + 1}: ${report.label}`}
+              className={`flex-shrink-0 transition-all duration-300 rounded-full ${
+                isTrigger
+                  ? isActive ? 'w-3 h-3 bg-red-500 ring-2 ring-red-300 shadow-sm' :
+                    isDone   ? 'w-2.5 h-2.5 bg-red-400' :
+                               'w-2.5 h-2.5 bg-red-200'
+                  : isActive ? 'w-3 h-3 bg-amber-500 ring-2 ring-amber-200 shadow-sm' :
+                    isDone   ? 'w-2 h-2 bg-emerald-400' :
+                    isErr    ? 'w-2 h-2 bg-red-400' :
+                               'w-2 h-2 bg-slate-200'
+              }`}
+            />
+          )
+        })}
+        <span className="ml-1 text-[9px] text-red-400 font-bold flex-shrink-0">
+          ^ Step 7 = TRIGGER
+        </span>
+      </div>
     </div>
   )
-}
+})
+
+export default SimulationController

@@ -1,5 +1,7 @@
+import { useRef, useCallback } from 'react'
 import { useSocket } from '../hooks/useSocket.js'
 import { useWorldState } from '../hooks/useWorldState.js'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts.js'
 import MapContainer from '../components/MapContainer.jsx'
 import EntityLayer from '../components/EntityLayer.jsx'
 import RouteLayer from '../components/RouteLayer.jsx'
@@ -8,11 +10,19 @@ import TeamStatus from '../components/TeamStatus.jsx'
 import EventLog from '../components/EventLog.jsx'
 import AlertBanner from '../components/AlertBanner.jsx'
 import SimulationController from '../components/SimulationController.jsx'
-import { Loader2, Wifi, WifiOff } from 'lucide-react'
+import { Loader2, Wifi, WifiOff, Keyboard } from 'lucide-react'
 
 export default function Dashboard() {
   useSocket()
   const { isReady, isConnected, blockedRoads, alerts } = useWorldState()
+  const simRef = useRef(null)
+
+  // Keyboard shortcut handlers wired to SimulationController's imperative API
+  const onReset  = useCallback(() => simRef.current?.reset(),  [])
+  const onStart  = useCallback(() => simRef.current?.play(),   [])
+  const onToggle = useCallback(() => simRef.current?.toggle(), [])
+
+  useKeyboardShortcuts({ onReset, onStart, onToggle })
 
   return (
     <div className="h-[calc(100vh-3.5rem)] flex gap-0 overflow-hidden">
@@ -23,10 +33,7 @@ export default function Dashboard() {
         <div className="px-3 py-2 bg-white border-b border-slate-200 flex items-center gap-2 flex-shrink-0">
           {/* Connection indicator */}
           <span className={`flex items-center gap-1.5 text-[11px] font-semibold ${isConnected ? 'text-emerald-600' : 'text-red-500'}`}>
-            {isConnected
-              ? <Wifi className="w-3.5 h-3.5" />
-              : <WifiOff className="w-3.5 h-3.5" />
-            }
+            {isConnected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
             {isConnected ? 'Connected to Cascade' : 'Reconnecting…'}
           </span>
 
@@ -42,9 +49,14 @@ export default function Dashboard() {
           )}
 
           <div className="flex-1" />
-          <span className="text-[10px] text-slate-400 font-mono">
-            Map — OSM / Leaflet
-          </span>
+
+          {/* Keyboard shortcut hint */}
+          <div className="hidden md:flex items-center gap-1 text-[10px] text-slate-300">
+            <Keyboard className="w-3 h-3 text-slate-300" />
+            <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">S</kbd>
+            <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">Space</kbd>
+            <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">R</kbd>
+          </div>
         </div>
 
         {/* Map */}
@@ -69,14 +81,14 @@ export default function Dashboard() {
 
         {/* Simulation controller bar */}
         <div className="flex-shrink-0 px-3 py-2 bg-white border-t border-slate-200">
-          <SimulationController />
+          <SimulationController ref={simRef} />
         </div>
       </div>
 
       {/* ── RIGHT — Sidebar 35% ─────────────────────────────────── */}
       <aside className="flex-[0_0_35%] flex flex-col bg-slate-50/80 overflow-y-auto min-w-[280px] max-w-[440px]">
 
-        {/* ── Section: Live Alerts ─────────────────────── */}
+        {/* Live Alerts */}
         {alerts.length > 0 && (
           <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-slate-200 bg-white">
             <p className="sidebar-section-label mb-2">Live Alerts</p>
@@ -84,19 +96,19 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── Section: Hospital Status ─────────────────── */}
+        {/* Hospital Status */}
         <div className="px-4 pt-4 pb-3 border-b border-slate-200">
           <p className="sidebar-section-label mb-2">Hospital Status</p>
           <HospitalCard />
         </div>
 
-        {/* ── Section: Active Units ────────────────────── */}
+        {/* Active Units */}
         <div className="px-4 pt-4 pb-3 border-b border-slate-200">
           <p className="sidebar-section-label mb-2">Active Units</p>
           <TeamStatus />
         </div>
 
-        {/* ── Section: Event Log ───────────────────────── */}
+        {/* Event Log */}
         <div className="px-4 pt-4 pb-4 flex-1 flex flex-col min-h-0">
           <p className="sidebar-section-label mb-2">Event Log</p>
           <EventLog />

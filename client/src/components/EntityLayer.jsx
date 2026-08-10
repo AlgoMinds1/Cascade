@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, memo } from 'react'
 import { Marker, Popup, Polyline } from 'react-leaflet'
 import L from 'leaflet'
 import { useWorldState } from '../hooks/useWorldState.js'
@@ -20,9 +20,10 @@ L.Icon.Default.mergeOptions({
 })
 
 /**
- * Animated Ambulance Marker that smoothly progresses along its active route waypoints
+ * Animated Ambulance Marker — smoothly progresses along active route waypoints.
+ * Memoized: only re-renders when route, location, or status changes.
  */
-function AnimatedAmbulance({ amb }) {
+const AnimatedAmbulance = memo(function AnimatedAmbulance({ amb }) {
   const [currentPos, setCurrentPos] = useState(amb.location)
   const waypointIndexRef = useRef(0)
   const progressRef = useRef(0)
@@ -35,7 +36,6 @@ function AnimatedAmbulance({ amb }) {
       return
     }
 
-    // Reset waypoint tracking when route changes
     waypointIndexRef.current = 0
     progressRef.current = 0
 
@@ -45,14 +45,12 @@ function AnimatedAmbulance({ amb }) {
 
       const idx = waypointIndexRef.current
       if (idx >= wps.length - 1) {
-        // Loop or stay at destination
         setCurrentPos(wps[wps.length - 1])
         return
       }
 
       const p1 = wps[idx]
       const p2 = wps[idx + 1]
-
       progressRef.current += 0.04
 
       if (progressRef.current >= 1) {
@@ -73,23 +71,132 @@ function AnimatedAmbulance({ amb }) {
     <Marker position={currentPos} icon={ambulanceIcon}>
       <Popup>
         <div className="text-xs space-y-1">
-          <div className="font-bold text-intel flex items-center gap-1">
-            Unit {amb.callSign}
-          </div>
+          <div className="font-bold text-intel">Unit {amb.callSign}</div>
           <div>Status: <span className="font-semibold text-slate-800">{amb.status.toUpperCase()}</span></div>
           {amb.route?.duration && (
             <div>ETA: <span className="font-semibold text-slate-800">{Math.round(amb.route.duration / 60)} mins</span></div>
           )}
           {amb.route?.rerouted && (
-            <div className="pill bg-blue-100 text-intel font-semibold mt-1">
-              REROUTE ACTIVE
-            </div>
+            <div className="pill bg-blue-100 text-intel font-semibold mt-1">REROUTE ACTIVE</div>
           )}
         </div>
       </Popup>
     </Marker>
   )
-}
+}, (prev, next) =>
+  prev.amb.id === next.amb.id &&
+  prev.amb.status === next.amb.status &&
+  prev.amb.route?.duration === next.amb.route?.duration &&
+  prev.amb.route?.rerouted === next.amb.route?.rerouted
+)
+
+/**
+ * Hospital Marker — memoized, re-renders only on status or capacity changes.
+ */
+const HospitalMarker = memo(function HospitalMarker({ hosp }) {
+  const isWarning = hosp.status === 'overflow_warning'
+  return (
+    <Marker
+      position={hosp.location}
+      icon={isWarning ? hospitalWarningIcon : hospitalIcon}
+    >
+      <Popup>
+        <div className="text-xs space-y-1">
+          <div className="font-bold text-slate-900">{hosp.name}</div>
+          <div>Capacity: <span className="font-semibold">{hosp.capacity.current}/{hosp.capacity.total}</span></div>
+          {hosp.capacity.incoming > 0 && (
+            <div className="text-red-600 font-semibold">Incoming Surge: +{hosp.capacity.incoming}</div>
+          )}
+          <div>Status: <span className={`font-semibold ${isWarning ? 'text-red-600' : 'text-emerald-600'}`}>{hosp.status.toUpperCase()}</span></div>
+        </div>
+      </Popup>
+    </Marker>
+  )
+}, (prev, next) =>
+  prev.hosp.id === next.hosp.id &&
+  prev.hosp.status === next.hosp.status &&
+  prev.hosp.capacity.current === next.hosp.capacity.current &&
+  prev.hosp.capacity.incoming === next.hosp.capacity.incoming
+)
+
+/**
+ * Rescue Team Marker — memoized, re-renders only on status or task changes.
+ */
+const TeamMarker = memo(function TeamMarker({ team }) {
+  return (
+    <Marker position={team.location} icon={teamIcon}>
+      <Popup>
+        <div className="text-xs space-y-1">
+          <div className="font-bold text-slate-900">{team.name}</div>
+          <div>Status: <span className="font-semibold text-amber-700">{team.status.toUpperCase()}</span></div>
+          <div>Task: <span className="font-semibold text-slate-700">{team.assignedTask || 'Standby'}</span></div>
+        </div>
+      </Popup>
+    </Marker>
+  )
+}, (prev, next) =>
+  prev.team.id === next.team.id &&
+  prev.team.status === next.team.status &&
+  prev.team.assignedTask === next.team.assignedTask
+)
+
+/**
+ * Road/Bridge layer group — memoized per road entity.
+ */
+const RoadGroup = memo(function RoadGroup({ road }) {
+  const isBlocked = road.status === 'blocked'
+  const isBridge = road.type === 'bridge'
+  const hasCoords = road.coords && road.coords.length >= 2
+  const midPoint = hasCoords ? road.coords[Math.floor(road.coords.length / 2)] : null
+
+  return (
+    <div>
+      {hasCoords ? (
+        <>
+          {isBlocked && (
+            <Polyline
+              positions={road.coords}
+              pathOptions={{ color: '#DC2626', weight: 10, opacity: 0, className: 'blocked-road-halo' }}
+            />
+          )}
+          <Polyline
+            positions={road.coords}
+            pathOptions={{
+              color: isBlocked ? '#DC2626' : isBridge ? '#334155' : '#64748B',
+              weight: isBridge ? 6 : 4,
+              dashArray: isBlocked ? '8 5' : null,
+              opacity: isBlocked ? 0.95 : 0.85,
+              className: isBlocked ? 'blocked-road-line' : ''
+            }}
+          >
+            <Popup>
+              <div className="text-xs space-y-1">
+                <div className="font-bold text-slate-900">{road.name} ({road.type.toUpperCase()})</div>
+                <div>Status: <span className={`font-semibold ${isBlocked ? 'text-red-600' : 'text-emerald-600'}`}>{road.status.toUpperCase()}</span></div>
+                {isBlocked && <div className="pill bg-red-100 text-red-700 font-bold mt-1">BLOCKED — AI REROUTING</div>}
+              </div>
+            </Popup>
+          </Polyline>
+        </>
+      ) : null}
+
+      {isBridge && midPoint ? (
+        <Marker position={midPoint} icon={isBlocked ? bridgeBlockedIcon : bridgeIcon}>
+          <Popup>
+            <div className="text-xs space-y-1">
+              <div className="font-bold text-slate-900">{road.name}</div>
+              <div>Infrastructure Type: Bridge</div>
+              <div>Status: <span className={`font-semibold ${isBlocked ? 'text-red-600' : 'text-emerald-600'}`}>{road.status.toUpperCase()}</span></div>
+            </div>
+          </Popup>
+        </Marker>
+      ) : null}
+    </div>
+  )
+}, (prev, next) =>
+  prev.road.id === next.road.id &&
+  prev.road.status === next.road.status
+)
 
 export default function EntityLayer() {
   const { worldState } = useWorldState()
@@ -97,107 +204,20 @@ export default function EntityLayer() {
 
   return (
     <>
-      {/* Roads / Bridges */}
-      {worldState.roads?.map(road => {
-        const isBlocked = road.status === 'blocked'
-        const isBridge = road.type === 'bridge'
-        const hasCoords = road.coords && road.coords.length >= 2
-        const midPoint = hasCoords
-          ? road.coords[Math.floor(road.coords.length / 2)]
-          : null
-
-        return (
-          <div key={`road-group-${road.id}`}>
-            {hasCoords ? (
-              <>
-                {/* Pulse glow halo for blocked roads */}
-                {isBlocked && (
-                  <Polyline
-                    positions={road.coords}
-                    pathOptions={{
-                      color: '#DC2626',
-                      weight: 10,
-                      opacity: 0,
-                      className: 'blocked-road-halo'
-                    }}
-                  />
-                )}
-                <Polyline
-                  positions={road.coords}
-                  pathOptions={{
-                    color: isBlocked ? '#DC2626' : isBridge ? '#334155' : '#64748B',
-                    weight: isBridge ? 6 : 4,
-                    dashArray: isBlocked ? '8 5' : null,
-                    opacity: isBlocked ? 0.95 : 0.85,
-                    className: isBlocked ? 'blocked-road-line' : ''
-                  }}
-                >
-                  <Popup>
-                    <div className="text-xs space-y-1">
-                      <div className="font-bold text-slate-900">{road.name} ({road.type.toUpperCase()})</div>
-                      <div>Status: <span className={`font-semibold ${isBlocked ? 'text-red-600' : 'text-emerald-600'}`}>{road.status.toUpperCase()}</span></div>
-                      {isBlocked && <div className="pill bg-red-100 text-red-700 font-bold mt-1">BLOCKED — AI REROUTING</div>}
-                    </div>
-                  </Popup>
-                </Polyline>
-              </>
-            ) : null}
-
-            {/* Dedicated Bridge Arch / Blocked Icon at Midpoint */}
-            {isBridge && midPoint ? (
-              <Marker
-                position={midPoint}
-                icon={isBlocked ? bridgeBlockedIcon : bridgeIcon}
-              >
-                <Popup>
-                  <div className="text-xs space-y-1">
-                    <div className="font-bold text-slate-900">{road.name}</div>
-                    <div>Infrastructure Type: Bridge</div>
-                    <div>Status: <span className={`font-semibold ${isBlocked ? 'text-red-600' : 'text-emerald-600'}`}>{road.status.toUpperCase()}</span></div>
-                  </div>
-                </Popup>
-              </Marker>
-            ) : null}
-          </div>
-        )
-      })}
-
-      {/* Hospitals */}
-      {worldState.hospitals?.map(hosp => (
-        <Marker
-          key={hosp.id}
-          position={hosp.location}
-          icon={hosp.status === 'overflow_warning' ? hospitalWarningIcon : hospitalIcon}
-        >
-          <Popup>
-            <div className="text-xs space-y-1">
-              <div className="font-bold text-slate-900">{hosp.name}</div>
-              <div>Capacity: <span className="font-semibold">{hosp.capacity.current}/{hosp.capacity.total}</span></div>
-              {hosp.capacity.incoming > 0 && (
-                <div className="text-red-600 font-semibold">Incoming Surge: +{hosp.capacity.incoming}</div>
-              )}
-              <div>Status: <span className={`font-semibold ${hosp.status === 'overflow_warning' ? 'text-red-600' : 'text-emerald-600'}`}>{hosp.status.toUpperCase()}</span></div>
-            </div>
-          </Popup>
-        </Marker>
+      {worldState.roads?.map(road => (
+        <RoadGroup key={road.id} road={road} />
       ))}
 
-      {/* Ambulances with Smooth GPS Animation */}
+      {worldState.hospitals?.map(hosp => (
+        <HospitalMarker key={hosp.id} hosp={hosp} />
+      ))}
+
       {worldState.ambulances?.map(amb => (
         <AnimatedAmbulance key={amb.id} amb={amb} />
       ))}
 
-      {/* Rescue Teams */}
       {worldState.rescueTeams?.map(team => (
-        <Marker key={team.id} position={team.location} icon={teamIcon}>
-          <Popup>
-            <div className="text-xs space-y-1">
-              <div className="font-bold text-slate-900">{team.name}</div>
-              <div>Status: <span className="font-semibold text-amber-700">{team.status.toUpperCase()}</span></div>
-              <div>Task: <span className="font-semibold text-slate-700">{team.assignedTask || 'Standby'}</span></div>
-            </div>
-          </Popup>
-        </Marker>
+        <TeamMarker key={team.id} team={team} />
       ))}
     </>
   )

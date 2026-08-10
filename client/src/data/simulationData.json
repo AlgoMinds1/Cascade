@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "version": "1.0",
+    "totalReports": 12,
+    "triggerIndex": 6,
+    "description": "Cascade Phase 7 — 90-second hackathon demo script. Report #7 (index 6) is THE TRIGGER: Bridge 17 collapse."
+  },
+  "reports": [
+    {
+      "id": "sim-01",
+      "step": 1,
+      "label": "Unusual Smoke",
+      "message": "Unusual smoke spotted near South Avenue — possible vehicle fire",
+      "source": "citizen",
+      "severity": "low",
+      "delaySeconds": 0,
+      "note": "Ambient — sets the scene"
+    },
+    {
+      "id": "sim-02",
+      "step": 2,
+      "label": "Road 17 Traffic Jam",
+      "message": "Heavy traffic jam on Road 17 near the bridge, vehicles not moving",
+      "source": "citizen",
+      "severity": "low",
+      "delaySeconds": 5,
+      "note": "Early warning signal"
+    },
+    {
+      "id": "sim-03",
+      "step": 3,
+      "label": "Oak Street Fire",
+      "message": "Fire near Oak Street School on South Avenue, smoke visible from distance",
+      "source": "citizen",
+      "severity": "medium",
+      "delaySeconds": 5,
+      "note": "South Avenue fire — secondary incident"
+    },
+    {
+      "id": "sim-04",
+      "step": 4,
+      "label": "Road 17 Looks Damaged",
+      "message": "Road 17 surface looks cracked and unstable near the bridge overpass",
+      "source": "judge",
+      "severity": "medium",
+      "delaySeconds": 5,
+      "note": "Bridge concern — escalation begins"
+    },
+    {
+      "id": "sim-05",
+      "step": 5,
+      "label": "Water Seeping",
+      "message": "Water is seeping through the road seventeen bridge foundation, structural concern",
+      "source": "citizen",
+      "severity": "high",
+      "delaySeconds": 6,
+      "note": "Pre-collapse warning"
+    },
+    {
+      "id": "sim-06",
+      "step": 6,
+      "label": "Bridge Cracking",
+      "message": "Bridge on Road 17 is visibly cracking and damaged — traffic should be stopped immediately",
+      "source": "judge",
+      "severity": "critical",
+      "delaySeconds": 5,
+      "note": "Final warning before collapse"
+    },
+    {
+      "id": "sim-07",
+      "step": 7,
+      "label": "BRIDGE COLLAPSE",
+      "message": "Bridge on Road 17 has collapsed and is completely blocked — major structural failure",
+      "source": "judge",
+      "severity": "critical",
+      "delaySeconds": 6,
+      "note": "THE TRIGGER — cascading reroute begins"
+    },
+    {
+      "id": "sim-08",
+      "step": 8,
+      "label": "Reroute Confirmed",
+      "message": "Road 17 is now impassable, ambulances need alternate routes immediately",
+      "source": "simulation",
+      "severity": "critical",
+      "delaySeconds": 5,
+      "note": "Reroute follow-up"
+    },
+    {
+      "id": "sim-09",
+      "step": 9,
+      "label": "Hospital Surge",
+      "message": "City General hospital receiving incoming casualties from Road 17 collapse zone",
+      "source": "simulation",
+      "severity": "high",
+      "delaySeconds": 5,
+      "note": "Hospital pressure"
+    },
+    {
+      "id": "sim-10",
+      "step": 10,
+      "label": "Team Deployed",
+      "message": "Alpha Rescue team is deployed to bridge seventeen for structural assessment and rescue",
+      "source": "simulation",
+      "severity": "medium",
+      "delaySeconds": 4,
+      "note": "Rescue team deployed"
+    },
+    {
+      "id": "sim-11",
+      "step": 11,
+      "label": "South Ave Congestion",
+      "message": "South Avenue congestion worsening as traffic diverts from Road 17 blockage",
+      "source": "citizen",
+      "severity": "medium",
+      "delaySeconds": 5,
+      "note": "Secondary cascade effect"
+    },
+    {
+      "id": "sim-12",
+      "step": 12,
+      "label": "All Units Active",
+      "message": "All emergency units responding — cascade protocol fully activated across Road 17 corridor",
+      "source": "simulation",
+      "severity": "high",
+      "delaySeconds": 5,
+      "note": "Final status wrap"
+    }
+  ]
+}

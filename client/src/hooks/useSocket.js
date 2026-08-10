@@ -3,6 +3,7 @@ import { io } from 'socket.io-client'
 import { useWorld } from '../store/WorldContext.jsx'
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const THROTTLE_MS = 200
 
 export function useSocket() {
   const { updateState, addAlert, addEvent, setIsConnected } = useWorld()
@@ -26,8 +27,22 @@ export function useSocket() {
       setIsConnected(false)
     })
 
+    // Throttle rapid state:updated bursts — only apply the latest snapshot
+    // within each 200ms window to prevent jank during simulation playback
+    let pendingSnapshot = null
+    let throttleTimer = null
+
     socket.on('state:updated', (snapshot) => {
-      updateState(snapshot)
+      pendingSnapshot = snapshot
+      if (!throttleTimer) {
+        throttleTimer = setTimeout(() => {
+          if (pendingSnapshot) {
+            updateState(pendingSnapshot)
+            pendingSnapshot = null
+          }
+          throttleTimer = null
+        }, THROTTLE_MS)
+      }
     })
 
     socket.on('alert', (alert) => {
@@ -39,6 +54,7 @@ export function useSocket() {
     })
 
     return () => {
+      if (throttleTimer) clearTimeout(throttleTimer)
       socket.disconnect()
     }
   }, [updateState, addAlert, addEvent, setIsConnected])

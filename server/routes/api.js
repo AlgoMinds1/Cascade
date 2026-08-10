@@ -140,7 +140,99 @@ router.post('/report', async (req, res) => {
 router.post('/reset', (req, res) => {
   const newState = req.world.reset()
   req.io.emit('state:updated', newState)
+  // Also reset any running server-side simulation
+  if (activeSimTimers.length > 0) {
+    activeSimTimers.forEach(t => clearTimeout(t))
+    activeSimTimers.length = 0
+  }
   res.json({ success: true, state: newState })
 })
 
+// Track server-side simulation timers so they can be cancelled
+const activeSimTimers = []
+
+/**
+ * POST /api/simulate
+ * Server-side sequenced simulation replay — fires each report with its delaySeconds offset.
+ * Returns immediately; simulation runs asynchronously.
+ * Body: { reports: [{ message, source, delaySeconds }], startIndex?: number }
+ */
+router.post('/simulate', async (req, res) => {
+  const { reports, startIndex = 0 } = req.body
+  if (!Array.isArray(reports) || reports.length === 0) {
+    return res.status(400).json({ success: false, error: 'reports array required' })
+  }
+
+  // Cancel any existing server-side simulation
+  activeSimTimers.forEach(t => clearTimeout(t))
+  activeSimTimers.length = 0
+
+  const world = req.world
+  const io = req.io
+  let cumulativeDelayMs = 0
+
+  for (let i = startIndex; i < reports.length; i++) {
+    const report = reports[i]
+    cumulativeDelayMs += (report.delaySeconds ?? 5) * 1000
+
+    const timer = setTimeout(async () => {
+      try {
+        const { extractEntities } = await import('../agents/ExtractionAgent.js')
+        const { recomputeRoutes } = await import('../agents/RouteAgent.js')
+        const { computeImpact } = await import('../agents/ImpactAgent.js')
+
+        const extracted = extractEntities(report.message)
+        if (!extracted.entityId) return
+
+        if (extracted.type === 'ROAD_BLOCKED') {
+          world.blockRoad(extracted.entityId)
+          const routeResult = await recomputeRoutes(world.getState(), extracted.entityId)
+          const impactResult = computeImpact(world.getState(), extracted.entityId, routeResult)
+
+          for (const ambId of routeResult.affectedAmbulances) {
+            if (routeResult.newRoutes[ambId]) {
+              world.updateAmbulanceRoute(ambId, routeResult.newRoutes[ambId])
+            }
+          }
+          if (impactResult.teamAssignment) {
+            world.assignTeam(impactResult.teamAssignment.teamId, impactResult.teamAssignment.task)
+          }
+          if (impactResult.affectedHospitals?.length > 0) {
+            world.updateHospitalStatus(
+              impactResult.affectedHospitals[0],
+              impactResult.incomingSurge,
+              impactResult.newHospitalStatus
+            )
+          }
+        }
+
+        const newState = world.getState()
+        io.emit('state:updated', newState)
+        io.emit('alert', {
+          id: `alert-sim-${Date.now()}`,
+          level: 'critical',
+          message: `CRITICAL: Incident on ${extracted.entityId} — ${report.label || 'cascade active'}.`
+        })
+      } catch (err) {
+        console.error('[Simulate] Step error:', err.message)
+      }
+    }, cumulativeDelayMs)
+
+    activeSimTimers.push(timer)
+  }
+
+  res.json({ success: true, started: true, total: reports.length - startIndex })
+})
+
+/**
+ * POST /api/simulate/stop
+ * Cancels any running server-side simulation timers.
+ */
+router.post('/simulate/stop', (req, res) => {
+  activeSimTimers.forEach(t => clearTimeout(t))
+  activeSimTimers.length = 0
+  res.json({ success: true, stopped: true })
+})
+
 export default router
+
