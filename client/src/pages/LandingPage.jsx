@@ -93,26 +93,26 @@ function OperationalViz() {
           <rect x="130" y="0" width="14" height="200" fill="#E2E6E3" />
           <rect x="245" y="0" width="14" height="200" fill="#E2E6E3" />
           <rect x="360" y="0" width="14" height="200" fill="#E2E6E3" />
-          <text x="240" y="96" textAnchor="middle" fontSize="8" fontWeight="600" fill={C.secondary} fontFamily="IBM Plex Sans, sans-serif">MAIN AVE</text>
+          <text x="75" y="95" textAnchor="middle" fontSize="8" fontWeight="600" fill={C.secondary} fontFamily="IBM Plex Sans, sans-serif">MAIN AVE</text>
           {step >= 1 ? (
             <>
-              <line x1="245" y1="60" x2="245" y2="110" stroke={C.accent} strokeWidth="4" strokeDasharray="5,3" />
-              <rect x="230" y="75" width="28" height="14" rx="2" fill={C.accent} />
-              <text x="244" y="85" textAnchor="middle" fontSize="7.5" fontWeight="700" fill="white" fontFamily="IBM Plex Sans, sans-serif">CLOSED</text>
+              <line x1="252" y1="60" x2="252" y2="110" stroke={C.accent} strokeWidth="4" strokeDasharray="5,3" />
+              <rect x="231" y="75" width="42" height="15" rx="3" fill={C.accent} />
+              <text x="252" y="86" textAnchor="middle" fontSize="8" fontWeight="700" fill="white" fontFamily="IBM Plex Sans, sans-serif">CLOSED</text>
             </>
           ) : (
-            <line x1="245" y1="60" x2="245" y2="110" stroke={C.border} strokeWidth="4" />
+            <line x1="252" y1="60" x2="252" y2="110" stroke={C.border} strokeWidth="4" />
           )}
           {step >= 2 ? (
             <g>
-              <path d="M80 92 L130 92 L130 155 L245 155" stroke={C.warning} strokeWidth="2.5" strokeDasharray="6,3" fill="none" />
-              <rect x="60" y="82" width="22" height="16" rx="2" fill={C.warning} />
-              <rect x="68" y="87" width="6" height="6" fill="white" rx="1" />
+              <path d="M80 92 L130 92 L130 155 L252 155" stroke={C.warning} strokeWidth="2.5" strokeDasharray="6,3" fill="none" />
+              <rect x="56" y="84" width="24" height="16" rx="3" fill={C.warning} />
+              <rect x="65" y="89" width="6" height="6" fill="white" rx="1" />
             </g>
           ) : (
             <g>
               <path d="M60 92 L260 92" stroke={C.secondary} strokeWidth="2" strokeDasharray="4,3" fill="none" opacity="0.4" />
-              <rect x="60" y="82" width="22" height="16" rx="2" fill={C.secondary} opacity="0.5" />
+              <rect x="56" y="84" width="24" height="16" rx="3" fill={C.secondary} opacity="0.5" />
             </g>
           )}
           {step >= 3 && (
@@ -120,8 +120,8 @@ function OperationalViz() {
           )}
           {step === 0 && (
             <g>
-              <rect x="200" y="60" width="82" height="22" rx="3" fill={C.accent} />
-              <text x="241" y="75" textAnchor="middle" fontSize="9" fontWeight="700" fill="white" fontFamily="IBM Plex Sans, sans-serif">BRIDGE COLLAPSED</text>
+              <rect x="187" y="56" width="130" height="24" rx="4" fill={C.accent} />
+              <text x="252" y="72" textAnchor="middle" fontSize="10" fontWeight="700" fill="white" fontFamily="IBM Plex Sans, sans-serif">BRIDGE COLLAPSED</text>
             </g>
           )}
         </svg>
