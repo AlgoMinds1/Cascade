@@ -78,50 +78,124 @@ function OperationalViz() {
 
       <div style={{ padding: 20 }}>
         <svg width="100%" viewBox="0 0 480 200" style={{ display: 'block', borderRadius: 6, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)' }}>
+          <style>{`
+            @keyframes pathFlow {
+              from { stroke-dashoffset: 20; }
+              to { stroke-dashoffset: 0; }
+            }
+            .animated-path {
+              animation: pathFlow 1.2s linear infinite;
+            }
+          `}</style>
+
+          {/* Base Canvas */}
           <rect width="480" height="200" fill={C.bg} />
-          <rect x="40" y="20" width="80" height="50" rx="3" fill={C.surface} stroke={C.border} strokeWidth="1" />
-          <rect x="160" y="20" width="60" height="50" rx="3" fill={C.surface} stroke={C.border} strokeWidth="1" />
-          <rect x="260" y="20" width="80" height="50" rx="3" fill={C.surface} stroke={C.border} strokeWidth="1" />
-          <rect x="380" y="20" width="60" height="50" rx="3" fill={C.surface} stroke={C.border} strokeWidth="1" />
-          <rect x="40" y="130" width="80" height="50" rx="3" fill={C.surface} stroke={C.border} strokeWidth="1" />
-          <rect x="160" y="130" width="60" height="50" rx="3" fill={C.surface} stroke={C.border} strokeWidth="1" />
-          <rect x="380" y="130" width="60" height="50" rx="3" fill={C.surface} stroke={C.border} strokeWidth="1" />
-          <rect x="260" y="130" width="80" height="50" rx="3" fill="#EEF7F2" stroke={C.success} strokeWidth="1.5" />
-          <text x="300" y="152" textAnchor="middle" fontSize="11" fontWeight="700" fill={C.success} fontFamily="IBM Plex Sans, sans-serif">H</text>
-          <text x="300" y="168" textAnchor="middle" fontSize="9" fill={C.success} fontFamily="IBM Plex Sans, sans-serif">HOSPITAL</text>
-          <rect x="0" y="85" width="480" height="14" fill="#E2E6E3" />
-          <rect x="130" y="0" width="14" height="200" fill="#E2E6E3" />
-          <rect x="245" y="0" width="14" height="200" fill="#E2E6E3" />
-          <rect x="360" y="0" width="14" height="200" fill="#E2E6E3" />
-          <text x="75" y="95" textAnchor="middle" fontSize="8" fontWeight="600" fill={C.secondary} fontFamily="IBM Plex Sans, sans-serif">MAIN AVE</text>
-          {step >= 1 ? (
-            <>
-              <line x1="252" y1="60" x2="252" y2="110" stroke={C.accent} strokeWidth="4" strokeDasharray="5,3" />
-              <rect x="231" y="75" width="42" height="15" rx="3" fill={C.accent} />
-              <text x="252" y="86" textAnchor="middle" fontSize="8" fontWeight="700" fill="white" fontFamily="IBM Plex Sans, sans-serif">CLOSED</text>
-            </>
-          ) : (
-            <line x1="252" y1="60" x2="252" y2="110" stroke={C.border} strokeWidth="4" />
+
+          {/* Horizontal Roads */}
+          <rect x="0" y="62" width="480" height="16" fill="#E5E9E6" />
+          <rect x="0" y="142" width="480" height="16" fill="#E5E9E6" />
+
+          {/* Vertical Roads */}
+          <rect x="112" y="0" width="16" height="200" fill="#E5E9E6" />
+          <rect x="232" y="0" width="16" height="200" fill="#E5E9E6" />
+          <rect x="352" y="0" width="16" height="200" fill="#E5E9E6" />
+
+          {/* Lane Centerlines */}
+          <line x1="0" y1="70" x2="480" y2="70" stroke="#D3D8D5" strokeWidth="1" strokeDasharray="4,4" />
+          <line x1="0" y1="150" x2="480" y2="150" stroke="#D3D8D5" strokeWidth="1" strokeDasharray="4,4" />
+          <line x1="120" y1="0" x2="120" y2="200" stroke="#D3D8D5" strokeWidth="1" strokeDasharray="4,4" />
+          <line x1="240" y1="0" x2="240" y2="200" stroke="#D3D8D5" strokeWidth="1" strokeDasharray="4,4" />
+          <line x1="360" y1="0" x2="360" y2="200" stroke="#D3D8D5" strokeWidth="1" strokeDasharray="4,4" />
+
+          {/* Top Row City Blocks (y=14..54) */}
+          <rect x="24" y="14" width="80" height="40" rx="4" fill={C.surface} stroke={C.border} strokeWidth="1" />
+          <rect x="136" y="14" width="88" height="40" rx="4" fill={C.surface} stroke={C.border} strokeWidth="1" />
+          <rect x="256" y="14" width="88" height="40" rx="4" fill={C.surface} stroke={C.border} strokeWidth="1" />
+          <rect x="376" y="14" width="80" height="40" rx="4" fill={C.surface} stroke={C.border} strokeWidth="1" />
+
+          {/* Bottom Row City Blocks (y=86..134) */}
+          <rect x="24" y="86" width="80" height="48" rx="4" fill={C.surface} stroke={C.border} strokeWidth="1" />
+          <rect x="136" y="86" width="88" height="48" rx="4" fill={C.surface} stroke={C.border} strokeWidth="1" />
+          <rect x="376" y="86" width="80" height="48" rx="4" fill={C.surface} stroke={C.border} strokeWidth="1" />
+
+          {/* Hospital Block */}
+          <rect x="256" y="86" width="88" height="48" rx="4" fill={step >= 4 ? '#E6F4EA' : '#EEF7F2'} stroke={C.success} strokeWidth={step >= 4 ? '2' : '1.5'} />
+          <text x="300" y="106" textAnchor="middle" fontSize="11" fontWeight="700" fill={C.success} fontFamily="IBM Plex Sans, sans-serif">H</text>
+          <text x="300" y="120" textAnchor="middle" fontSize="8" fontWeight="600" fill={C.success} fontFamily="IBM Plex Sans, sans-serif">HOSPITAL</text>
+          {step >= 4 && (
+            <text x="300" y="130" textAnchor="middle" fontSize="7" fontWeight="700" fill={C.success} fontFamily="IBM Plex Sans, sans-serif">LOAD: RECALCULATED</text>
           )}
+          {/* Hospital Entrance Indicator */}
+          <rect x="248" y="104" width="8" height="12" rx="2" fill={C.success} />
+
+          {/* Street Name Labels */}
+          <text x="180" y="73" textAnchor="middle" fontSize="8" fontWeight="600" fill={C.secondary} fontFamily="IBM Plex Sans, sans-serif" opacity="0.8">MAIN AVE</text>
+          <text x="180" y="153" textAnchor="middle" fontSize="8" fontWeight="600" fill={C.secondary} fontFamily="IBM Plex Sans, sans-serif" opacity="0.8">SOUTH AVE</text>
+          <text x="120" y="10" textAnchor="middle" fontSize="7" fontWeight="600" fill={C.secondary} fontFamily="IBM Plex Sans, sans-serif" opacity="0.7">1ST AVE</text>
+          <text x="240" y="10" textAnchor="middle" fontSize="7" fontWeight="600" fill={C.secondary} fontFamily="IBM Plex Sans, sans-serif" opacity="0.7">CENTRAL AVE</text>
+          <text x="360" y="10" textAnchor="middle" fontSize="7" fontWeight="600" fill={C.secondary} fontFamily="IBM Plex Sans, sans-serif" opacity="0.7">EAST AVE</text>
+
+          {/* Evacuation Zone Highlight (Step 3+) */}
+          {step >= 3 && (
+            <g>
+              <rect x="132" y="10" width="96" height="48" rx="4" fill={C.accent} fillOpacity="0.08" stroke={C.accent} strokeWidth="1.5" strokeDasharray="4,3" />
+              <text x="180" y="24" textAnchor="middle" fontSize="7" fontWeight="700" fill={C.accent} fontFamily="IBM Plex Sans, sans-serif">EVACUATION ZONE</text>
+            </g>
+          )}
+
+          {/* Road Closure on Central Ave */}
+          {step >= 1 ? (
+            <g>
+              <line x1="240" y1="45" x2="240" y2="95" stroke={C.accent} strokeWidth="4" strokeDasharray="4,3" />
+              <rect x="219" y="62.5" width="42" height="15" rx="3" fill={C.accent} />
+              <text x="240" y="73.5" textAnchor="middle" fontSize="8" fontWeight="700" fill="white" fontFamily="IBM Plex Sans, sans-serif">CLOSED</text>
+            </g>
+          ) : (
+            <line x1="240" y1="45" x2="240" y2="95" stroke={C.border} strokeWidth="3" opacity="0.5" />
+          )}
+
+          {/* Ambulance Routes */}
           {step >= 2 ? (
             <g>
-              <path d="M80 92 L130 92 L130 155 L252 155" stroke={C.warning} strokeWidth="2.5" strokeDasharray="6,3" fill="none" />
-              <rect x="56" y="84" width="24" height="16" rx="3" fill={C.warning} />
-              <rect x="65" y="89" width="6" height="6" fill="white" rx="1" />
+              <path
+                className="animated-path"
+                d="M 55 70 L 112 70 Q 120 70 120 78 L 120 142 Q 120 150 128 150 L 232 150 Q 240 150 240 142 L 240 114 Q 240 110 248 110 L 256 110"
+                stroke={C.warning}
+                strokeWidth="3"
+                strokeDasharray="6,4"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <g transform="translate(42, 61)">
+                <rect width="26" height="18" rx="4" fill={C.warning} />
+                <rect x="18" y="3" width="5" height="12" fill="#FFFFFF" opacity="0.8" rx="1" />
+                <path d="M7 9h6M10 6v6" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+              </g>
             </g>
           ) : (
             <g>
-              <path d="M60 92 L260 92" stroke={C.secondary} strokeWidth="2" strokeDasharray="4,3" fill="none" opacity="0.4" />
-              <rect x="56" y="84" width="24" height="16" rx="3" fill={C.secondary} opacity="0.5" />
+              <path
+                d="M 55 70 L 232 70 Q 240 70 240 78 L 240 110 L 256 110"
+                stroke={C.secondary}
+                strokeWidth="2"
+                strokeDasharray="4,3"
+                fill="none"
+                opacity="0.5"
+              />
+              <g transform="translate(42, 61)">
+                <rect width="26" height="18" rx="4" fill={C.secondary} opacity="0.7" />
+                <rect x="18" y="3" width="5" height="12" fill="#FFFFFF" opacity="0.8" rx="1" />
+                <path d="M7 9h6M10 6v6" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+              </g>
             </g>
           )}
-          {step >= 3 && (
-            <rect x="148" y="8" width="86" height="72" rx="3" fill={C.accent} fillOpacity="0.08" stroke={C.accent} strokeWidth="1.5" strokeDasharray="5,3" />
-          )}
+
+          {/* Step 0 Banner */}
           {step === 0 && (
             <g>
-              <rect x="187" y="56" width="130" height="24" rx="4" fill={C.accent} />
-              <text x="252" y="72" textAnchor="middle" fontSize="10" fontWeight="700" fill="white" fontFamily="IBM Plex Sans, sans-serif">BRIDGE COLLAPSED</text>
+              <rect x="175" y="58" width="130" height="24" rx="4" fill={C.accent} />
+              <text x="240" y="74" textAnchor="middle" fontSize="10" fontWeight="700" fill="white" fontFamily="IBM Plex Sans, sans-serif">BRIDGE COLLAPSED</text>
             </g>
           )}
         </svg>
