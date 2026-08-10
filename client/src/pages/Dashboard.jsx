@@ -29,8 +29,8 @@ export default function Dashboard() {
   return (
     <div className="h-[calc(100vh-3.5rem)] flex gap-0 overflow-hidden">
 
-      {/* ── LEFT — Map 65% ─────────────────────────────────────── */}
-      <div className="flex-[0_0_65%] flex flex-col min-w-0 border-r border-slate-200">
+      {/* ── LEFT — Map (Expands to fill all remaining space) ────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0 border-r border-slate-200">
         {/* Map toolbar */}
         <div className="px-3 py-2 bg-white border-b border-slate-200 flex items-center gap-2 flex-shrink-0">
           {/* Connection indicator */}
@@ -97,8 +97,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── RIGHT — Sidebar 35% ─────────────────────────────────── */}
-      <aside className="flex-[0_0_35%] flex flex-col bg-slate-50/80 overflow-y-auto min-w-[280px] max-w-[440px]">
+      {/* ── RIGHT — Sidebar ─────────────────────────────────── */}
+      <aside className="w-80 sm:w-[380px] lg:w-[420px] xl:w-[440px] flex-shrink-0 flex flex-col bg-slate-50/80 overflow-y-auto">
 
         {/* Live Alerts */}
         {alerts.length > 0 && (
