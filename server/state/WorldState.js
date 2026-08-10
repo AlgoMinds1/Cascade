@@ -14,35 +14,35 @@ class WorldStateClass {
           name: 'Road 17',
           type: 'road',
           status: 'open',
-          coords: [[19.0700, 72.8700], [19.0740, 72.8740], [19.0760, 72.8760], [19.0820, 72.8890]]
+          coords: [[18.6410, 73.7410], [18.6450, 73.7460], [18.6475, 73.7486], [18.6530, 73.7550]]
         },
         {
           id: 'bridge-17',
           name: 'Bridge 17',
           type: 'bridge',
           status: 'open',
-          coords: [[19.0740, 72.8740], [19.0760, 72.8760]]
+          coords: [[18.6450, 73.7460], [18.6475, 73.7486]]
         },
         {
           id: 'road-south',
           name: 'South Avenue',
           type: 'road',
           status: 'open',
-          coords: [[19.0610, 72.8610], [19.0680, 72.8750], [19.0700, 72.8700]]
+          coords: [[18.6340, 73.7340], [18.6390, 73.7400], [18.6410, 73.7410]]
         }
       ],
       hospitals: [
         {
           id: 'hosp-a',
           name: 'City General',
-          location: [19.0820, 72.8890],
+          location: [18.6530, 73.7550],
           capacity: { total: 100, current: 60, incoming: 0 },
           status: 'normal'
         },
         {
           id: 'hosp-b',
           name: 'Emergency Care',
-          location: [19.0610, 72.8610],
+          location: [18.6340, 73.7340],
           capacity: { total: 80, current: 40, incoming: 0 },
           status: 'normal'
         }
@@ -51,16 +51,16 @@ class WorldStateClass {
         {
           id: 'amb-1',
           callSign: 'A1',
-          location: [19.0700, 72.8700],
+          location: [18.6410, 73.7410],
           status: 'enroute',
           route: {
-            from: [19.0700, 72.8700],
-            to: [19.0820, 72.8890],
+            from: [18.6410, 73.7410],
+            to: [18.6530, 73.7550],
             waypoints: [
-              [19.0700, 72.8700],
-              [19.0740, 72.8740],
-              [19.0760, 72.8760],
-              [19.0820, 72.8890]
+              [18.6410, 73.7410],
+              [18.6450, 73.7460],
+              [18.6475, 73.7486],
+              [18.6530, 73.7550]
             ],
             duration: 360,
             distance: 2700,
@@ -70,14 +70,14 @@ class WorldStateClass {
         {
           id: 'amb-2',
           callSign: 'A2',
-          location: [19.0610, 72.8610],
+          location: [18.6340, 73.7340],
           status: 'idle',
           route: null
         },
         {
           id: 'amb-3',
           callSign: 'A3',
-          location: [19.0780, 72.8850],
+          location: [18.6500, 73.7510],
           status: 'idle',
           route: null
         }
@@ -86,7 +86,7 @@ class WorldStateClass {
         {
           id: 'team-1',
           name: 'Alpha Rescue',
-          location: [19.0750, 72.8750],
+          location: [18.6465, 73.7475],
           status: 'idle',
           assignedTask: null
         }

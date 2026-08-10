@@ -28,7 +28,7 @@ export function computeImpact(worldState, blockedRoadId, routeDelta = null) {
   const blockedEntity = roads.find(r => r.id === blockedRoadId)
   const incidentCenter = blockedEntity?.coords
     ? blockedEntity.coords[Math.floor(blockedEntity.coords.length / 2)]
-    : [19.0750, 72.8750]
+    : [18.6475, 73.7486]
 
   // 2. Identify nearest hospital to the incident zone
   let nearestHospital = null

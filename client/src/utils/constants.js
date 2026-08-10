@@ -1,4 +1,4 @@
-export const MAP_CENTER = [19.0760, 72.8777] // Mumbai default
+export const MAP_CENTER = [18.6475, 73.7486] // Ravet, Pune default
 export const MAP_ZOOM = 13
 
 export const ENTITY_TYPES = {

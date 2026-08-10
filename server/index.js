@@ -56,7 +56,7 @@ httpServer.listen(PORT, () => {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 1200)
 
-  fetch(`${osrmHealthUrl}/nearest/v1/driving/72.8777,19.0760`, { signal: controller.signal })
+  fetch(`${osrmHealthUrl}/nearest/v1/driving/73.7486,18.6475`, { signal: controller.signal })
     .then((res) => {
       clearTimeout(timeout)
       if (res.ok) {
@@ -71,8 +71,8 @@ httpServer.listen(PORT, () => {
     })
 
   // OSRM Warmup query
-  const warmupFrom = [19.0700, 72.8700]
-  const warmupTo   = [19.0820, 72.8890]
+  const warmupFrom = [18.6410, 73.7410]
+  const warmupTo   = [18.6530, 73.7550]
 
   calculateRoute(warmupFrom, warmupTo)
     .then(route => {
