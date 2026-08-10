@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { AlertTriangle, Send, ArrowLeft, CheckCircle2, Sparkles, Radio } from 'lucide-react'
+import { useWorld } from '../store/WorldContext.jsx'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_URL = import.meta.env.VITE_API_URL !== undefined
+  ? import.meta.env.VITE_API_URL
+  : (import.meta.env.DEV ? 'http://localhost:3001' : '')
 
 const QUICK_PROMPTS = [
   "Bridge on Road 17 has collapsed and is completely blocked",
@@ -12,6 +14,7 @@ const QUICK_PROMPTS = [
 ]
 
 export default function ReportPage() {
+  const { updateState } = useWorld()
   const [text, setText] = useState('')
   const [source, setSource] = useState('citizen')
   const [status, setStatus] = useState('idle')
@@ -36,6 +39,7 @@ export default function ReportPage() {
       const data = await res.json()
 
       if (res.ok && data.success) {
+        if (data.state) updateState(data.state)
         setExtractedResult(data.extracted)
         setStatus('sent')
         setTimeout(() => {

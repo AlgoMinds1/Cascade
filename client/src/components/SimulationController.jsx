@@ -3,7 +3,10 @@ import { Play, Pause, Square, RotateCcw, Loader2, Zap, CheckCircle, AlertCircle,
 import { useWorld } from '../store/WorldContext.jsx'
 import simulationData from '../data/simulationData.json'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_URL = import.meta.env.VITE_API_URL !== undefined
+  ? import.meta.env.VITE_API_URL
+  : (import.meta.env.DEV ? 'http://localhost:3001' : '')
+
 const REPORTS = simulationData.reports
 
 // State machine states
@@ -19,7 +22,8 @@ async function postReport(report) {
 }
 
 async function postReset() {
-  await fetch(`${API_URL}/api/reset`, { method: 'POST' })
+  const res = await fetch(`${API_URL}/api/reset`, { method: 'POST' })
+  return res.json()
 }
 
 /**
@@ -27,7 +31,7 @@ async function postReset() {
  * Exposes play(), pause(), reset() via ref for keyboard shortcut integration.
  */
 const SimulationController = forwardRef(function SimulationController(_, ref) {
-  const { setSimRunning } = useWorld()
+  const { setSimRunning, updateState } = useWorld()
   const [simState, setSimState] = useState(SIM_STATE.IDLE)
   const [currentStep, setCurrentStep] = useState(-1) // -1 = not started
   const [stepStatus, setStepStatus] = useState({}) // { [stepIndex]: 'ok' | 'err' | 'pending' }
@@ -63,6 +67,7 @@ const SimulationController = forwardRef(function SimulationController(_, ref) {
 
     try {
       const data = await postReport(REPORTS[index])
+      if (data?.state) updateState(data.state)
       setStepStatus(prev => ({ ...prev, [index]: data.success ? 'ok' : 'err' }))
     } catch {
       setStepStatus(prev => ({ ...prev, [index]: 'err' }))
@@ -81,7 +86,7 @@ const SimulationController = forwardRef(function SimulationController(_, ref) {
       setSimState(SIM_STATE.IDLE)
       stateRef.current = SIM_STATE.IDLE
     }
-  }, [])
+  }, [updateState])
 
   const play = useCallback(() => {
     if (stateRef.current === SIM_STATE.PLAYING) return
@@ -123,9 +128,12 @@ const SimulationController = forwardRef(function SimulationController(_, ref) {
     setCurrentStep(-1)
     setStepStatus({})
     setResetLoading(true)
-    try { await postReset() } catch { /* ignore */ }
+    try {
+      const data = await postReset()
+      if (data?.state) updateState(data.state)
+    } catch { /* ignore */ }
     setResetLoading(false)
-  }, [])
+  }, [updateState])
 
   // Expose imperative handle for keyboard shortcuts
   useImperativeHandle(ref, () => ({ play, pause, toggle, reset }), [play, pause, toggle, reset])

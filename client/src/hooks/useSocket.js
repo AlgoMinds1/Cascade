@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react'
 import { io } from 'socket.io-client'
 import { useWorld } from '../store/WorldContext.jsx'
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_URL = import.meta.env.VITE_API_URL !== undefined
+  ? import.meta.env.VITE_API_URL
+  : (import.meta.env.DEV ? 'http://localhost:3001' : '')
+
 const THROTTLE_MS = 200
 
 export function useSocket() {
@@ -10,52 +13,84 @@ export function useSocket() {
   const socketRef = useRef(null)
 
   useEffect(() => {
-    const socket = io(SOCKET_URL, {
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      timeout: 5000
-    })
-    socketRef.current = socket
+    // 1. Initial REST fetch for instant state load
+    fetch(`${API_URL}/api/state`)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.state) {
+          updateState(data.state)
+        }
+      })
+      .catch(() => {})
 
-    socket.on('connect', () => {
-      console.log('Socket connected to Cascade backend:', socket.id)
-      setIsConnected(true)
-    })
+    let connected = false
+    let socket = null
 
-    socket.on('disconnect', () => {
-      console.log('Socket disconnected from Cascade backend')
-      setIsConnected(false)
-    })
+    try {
+      socket = io(API_URL || window.location.origin, {
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 3000,
+        transports: ['websocket', 'polling']
+      })
+      socketRef.current = socket
 
-    // Throttle rapid state:updated bursts — only apply the latest snapshot
-    // within each 200ms window to prevent jank during simulation playback
-    let pendingSnapshot = null
-    let throttleTimer = null
+      socket.on('connect', () => {
+        console.log('Socket connected to Cascade backend:', socket.id)
+        connected = true
+        setIsConnected(true)
+      })
 
-    socket.on('state:updated', (snapshot) => {
-      pendingSnapshot = snapshot
-      if (!throttleTimer) {
-        throttleTimer = setTimeout(() => {
-          if (pendingSnapshot) {
-            updateState(pendingSnapshot)
-            pendingSnapshot = null
-          }
-          throttleTimer = null
-        }, THROTTLE_MS)
+      socket.on('disconnect', () => {
+        console.log('Socket disconnected from Cascade backend')
+        connected = false
+        setIsConnected(false)
+      })
+
+      let pendingSnapshot = null
+      let throttleTimer = null
+
+      socket.on('state:updated', (snapshot) => {
+        pendingSnapshot = snapshot
+        if (!throttleTimer) {
+          throttleTimer = setTimeout(() => {
+            if (pendingSnapshot) {
+              updateState(pendingSnapshot)
+              pendingSnapshot = null
+            }
+            throttleTimer = null
+          }, THROTTLE_MS)
+        }
+      })
+
+      socket.on('alert', (alert) => {
+        addAlert(alert)
+      })
+
+      socket.on('event', (evt) => {
+        addEvent(evt)
+      })
+    } catch (err) {
+      console.warn('Socket initialization fallback:', err)
+    }
+
+    // 2. HTTP Polling fallback when socket is unavailable or in serverless environment
+    const pollInterval = setInterval(() => {
+      if (!connected) {
+        fetch(`${API_URL}/api/state`)
+          .then(res => res.json())
+          .then(data => {
+            if (data?.state) {
+              updateState(data.state)
+            }
+          })
+          .catch(() => {})
       }
-    })
-
-    socket.on('alert', (alert) => {
-      addAlert(alert)
-    })
-
-    socket.on('event', (evt) => {
-      addEvent(evt)
-    })
+    }, 2500)
 
     return () => {
-      if (throttleTimer) clearTimeout(throttleTimer)
-      socket.disconnect()
+      clearInterval(pollInterval)
+      if (socket) socket.disconnect()
     }
   }, [updateState, addAlert, addEvent, setIsConnected])
 
