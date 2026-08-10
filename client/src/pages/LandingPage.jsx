@@ -1,5 +1,18 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import {
+  Camera,
+  Mic,
+  MapPin,
+  AlertTriangle,
+  Ambulance,
+  Hospital,
+  TrendingUp,
+  ArrowUp,
+  Package,
+  ArrowRight,
+  ShieldCheck
+} from 'lucide-react'
 
 // ─── Color constants ──────────────────────────────────────────────────────────
 const C = {
@@ -28,11 +41,11 @@ function OperationalViz() {
   }, [])
 
   const updates = [
-    { label: 'Bridge Collapsed', color: C.accent, icon: '⚠' },
-    { label: 'Ambulance Route Changed', color: C.warning, icon: '🚑' },
-    { label: 'Evacuation Route Updated', color: C.primary, icon: '↗' },
-    { label: 'Hospital Load Recalculated', color: C.success, icon: '🏥' },
-    { label: 'Rescue Priority Changed', color: C.accent, icon: '⬆' },
+    { label: 'Bridge Collapsed', color: C.accent, Icon: AlertTriangle },
+    { label: 'Ambulance Route Changed', color: C.warning, Icon: Ambulance },
+    { label: 'Evacuation Route Updated', color: C.primary, Icon: TrendingUp },
+    { label: 'Hospital Load Recalculated', color: C.success, Icon: Hospital },
+    { label: 'Rescue Priority Changed', color: C.accent, Icon: ArrowUp },
   ]
 
   return (
@@ -88,7 +101,7 @@ function OperationalViz() {
             <g>
               <path d="M80 92 L130 92 L130 155 L245 155" stroke={C.warning} strokeWidth="2" strokeDasharray="6,3" fill="none" />
               <rect x="60" y="82" width="22" height="16" rx="2" fill={C.warning} />
-              <text x="71" y="93" textAnchor="middle" fontSize="10" fill="white" fontFamily="IBM Plex Sans, sans-serif">🚑</text>
+              <rect x="68" y="87" width="6" height="6" fill="white" rx="1" />
             </g>
           ) : (
             <g>
@@ -117,7 +130,7 @@ function OperationalViz() {
               opacity: i === step ? 1 : 0.4,
               transition: 'opacity 0.3s',
             }}>
-              <span style={{ fontSize: 13 }}>{u.icon}</span>
+              <u.Icon style={{ width: 14, height: 14, flexShrink: 0, color: i === step ? u.color : C.secondary }} />
               <span style={{ fontSize: 11, fontWeight: i === step ? 600 : 400, color: i === step ? u.color : C.secondary }}>
                 {u.label}
               </span>
@@ -384,7 +397,9 @@ function HowItWorksSection() {
                 <div style={{ fontSize: 12, color: C.secondary, lineHeight: 1.4 }}>{step.desc}</div>
               </div>
               {i < steps.length - 1 && (
-                <div style={{ padding: '0 6px', color: C.border, fontSize: 16, flexShrink: 0 }}>→</div>
+                <div style={{ padding: '0 6px', color: C.border, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                  <ArrowRight style={{ width: 16, height: 16 }} />
+                </div>
               )}
             </div>
           ))}
@@ -445,11 +460,11 @@ function MultiAgentSection() {
 // ─── Core Differentiator ──────────────────────────────────────────────────────
 function CoreDifferentiatorSection() {
   const impacts = [
-    { label: 'Ambulance Route', value: 'Rerouted', icon: '🚑' },
-    { label: 'Evacuation Zone', value: 'Updated', icon: '↗' },
-    { label: 'Hospital Load', value: 'Recalculated', icon: '🏥' },
-    { label: 'Rescue Priority', value: 'Changed', icon: '⬆' },
-    { label: 'Supply Route', value: 'Redirected', icon: '📦' },
+    { label: 'Ambulance Route', value: 'Rerouted', Icon: Ambulance },
+    { label: 'Evacuation Zone', value: 'Updated', Icon: TrendingUp },
+    { label: 'Hospital Load', value: 'Recalculated', Icon: Hospital },
+    { label: 'Rescue Priority', value: 'Changed', Icon: ArrowUp },
+    { label: 'Supply Route', value: 'Redirected', Icon: Package },
   ]
 
   return (
@@ -477,7 +492,9 @@ function CoreDifferentiatorSection() {
             <div style={{ marginTop: 16, width: 36, height: 2, background: C.accent }} />
           </div>
 
-          <div style={{ color: C.border, fontSize: 22, display: 'flex', alignItems: 'center', padding: '28px 0' }}>→</div>
+          <div style={{ color: C.border, display: 'flex', alignItems: 'center', padding: '28px 0' }}>
+            <ArrowRight style={{ width: 24, height: 24 }} />
+          </div>
 
           <div style={{ flex: '1 1 280px' }}>
             {impacts.map((item, i) => (
@@ -489,8 +506,8 @@ function CoreDifferentiatorSection() {
                 borderTop: i === 0 ? `1px solid ${C.border}` : 'none',
                 borderRadius: i === 0 ? '6px 6px 0 0' : i === impacts.length - 1 ? '0 0 6px 6px' : 0,
               }}>
-                <span style={{ fontSize: 14, color: C.primary, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 16 }}>{item.icon}</span>
+                <span style={{ fontSize: 14, color: C.primary, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <item.Icon style={{ width: 16, height: 16, color: C.secondary }} />
                   {item.label}
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: C.accent, letterSpacing: '0.04em' }}>{item.value}</span>
@@ -519,12 +536,14 @@ function FieldReportingSection() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 32 }}>
               {[
-                { icon: '📷', label: 'Take a Photo', desc: 'Capture damage, hazards or blocked roads' },
-                { icon: '🎙', label: 'Record Voice', desc: 'Describe what you see' },
-                { icon: '📍', label: 'Share Location', desc: 'Help responders find you' },
+                { Icon: Camera, label: 'Take a Photo', desc: 'Capture damage, hazards or blocked roads' },
+                { Icon: Mic, label: 'Record Voice', desc: 'Describe what you see' },
+                { Icon: MapPin, label: 'Share Location', desc: 'Help responders find you' },
               ].map((item, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <span style={{ fontSize: 22, width: 36, textAlign: 'center', flexShrink: 0 }}>{item.icon}</span>
+                  <div style={{ width: 36, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+                    <item.Icon style={{ width: 22, height: 22, color: C.primary }} />
+                  </div>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: C.primary, marginBottom: 2 }}>{item.label}</div>
                     <div style={{ fontSize: 13, color: C.secondary }}>{item.desc}</div>
@@ -534,11 +553,14 @@ function FieldReportingSection() {
             </div>
             <Link to="/report" id="field-report-btn" style={{
               fontSize: 14, fontWeight: 600, color: C.white, textDecoration: 'none',
-              padding: '12px 24px', borderRadius: 6, background: C.accent, display: 'inline-block',
+              padding: '12px 24px', borderRadius: 6, background: C.accent, display: 'inline-flex',
+              alignItems: 'center', gap: 8, transition: 'opacity 0.15s',
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >Open Field Reporter →</Link>
+            >
+              Open Field Reporter <ArrowRight style={{ width: 16, height: 16 }} />
+            </Link>
           </div>
 
           {/* Phone mockup */}
@@ -558,15 +580,15 @@ function FieldReportingSection() {
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: C.primary, textAlign: 'center', marginBottom: 20 }}>What is happening?</div>
                 {[
-                  { icon: '📷', label: 'Take a Photo' },
-                  { icon: '🎙', label: 'Record Voice' },
-                  { icon: '📍', label: 'Share Location' },
+                  { Icon: Camera, label: 'Take a Photo' },
+                  { Icon: Mic, label: 'Record Voice' },
+                  { Icon: MapPin, label: 'Share Location' },
                 ].map((item, i) => (
                   <div key={i} style={{
                     background: C.white, border: `1px solid ${C.border}`, borderRadius: 7,
-                    padding: '11px 10px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '11px 10px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10,
                   }}>
-                    <span style={{ fontSize: 18 }}>{item.icon}</span>
+                    <item.Icon style={{ width: 16, height: 16, color: C.primary }} />
                     <div style={{ fontSize: 11, fontWeight: 600, color: C.primary }}>{item.label}</div>
                   </div>
                 ))}

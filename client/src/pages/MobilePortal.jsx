@@ -1,5 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  Camera,
+  Mic,
+  MapPin,
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  AlertTriangle,
+  Check,
+  Square
+} from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL !== undefined
   ? import.meta.env.VITE_API_URL
@@ -27,9 +38,9 @@ function SafetyBanner() {
 // ─── Screen: Home ─────────────────────────────────────────────────────────────
 function HomeScreen({ onAction }) {
   const actions = [
-    { id: 'photo', icon: '📷', label: 'Take a Photo', desc: 'Capture damage, hazards or blocked roads' },
-    { id: 'voice', icon: '🎙', label: 'Record Voice', desc: 'Describe what you see' },
-    { id: 'location', icon: '📍', label: 'Share Location', desc: 'Help responders find you' },
+    { id: 'photo', Icon: Camera, label: 'Take a Photo', desc: 'Capture damage, hazards or blocked roads' },
+    { id: 'voice', Icon: Mic, label: 'Record Voice', desc: 'Describe what you see' },
+    { id: 'location', Icon: MapPin, label: 'Share Location', desc: 'Help responders find you' },
   ]
 
   return (
@@ -53,7 +64,7 @@ function HomeScreen({ onAction }) {
             onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.background = C.surface; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = C.white; }}
           >
-            <span style={{ fontSize: 32, flexShrink: 0 }}>{action.icon}</span>
+            <action.Icon style={{ width: 32, height: 32, flexShrink: 0, color: C.primary }} />
             <div>
               <div style={{ fontSize: 17, fontWeight: 700, color: C.primary, marginBottom: 4 }}>{action.label}</div>
               <div style={{ fontSize: 13, color: C.secondary, lineHeight: 1.4 }}>{action.desc}</div>
@@ -90,7 +101,7 @@ function PhotoScreen({ onBack, onCapture }) {
   return (
     <div>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.secondary, padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
-        ← Back
+        <ArrowLeft style={{ width: 16, height: 16 }} /> Back
       </button>
       <h2 style={{ fontSize: 22, fontWeight: 700, color: C.primary, margin: '0 0 20px' }}>Take a Photo</h2>
       <SafetyBanner />
@@ -100,8 +111,9 @@ function PhotoScreen({ onBack, onCapture }) {
           <div style={{
             border: `2px dashed ${C.border}`, borderRadius: 10, padding: '48px 24px',
             textAlign: 'center', background: C.surface, marginBottom: 16,
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
           }}>
-            <div style={{ fontSize: 40, marginBottom: 14 }}>📷</div>
+            <Camera style={{ width: 44, height: 44, color: C.secondary, marginBottom: 14 }} />
             <p style={{ fontSize: 15, color: C.secondary, margin: '0 0 20px' }}>Take or upload a photo of the incident</p>
             <button
               id="photo-capture-btn"
@@ -203,7 +215,7 @@ function VoiceScreen({ onBack, onCapture }) {
   return (
     <div>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.secondary, padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
-        ← Back
+        <ArrowLeft style={{ width: 16, height: 16 }} /> Back
       </button>
       <h2 style={{ fontSize: 22, fontWeight: 700, color: C.primary, margin: '0 0 20px' }}>Record Voice</h2>
       <SafetyBanner />
@@ -211,17 +223,21 @@ function VoiceScreen({ onBack, onCapture }) {
       <div style={{ textAlign: 'center', padding: '24px 0 32px' }}>
         {state === 'idle' && (
           <>
-            <div style={{ fontSize: 60, marginBottom: 20 }}>🎙</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+              <Mic style={{ width: 56, height: 56, color: C.secondary }} />
+            </div>
             <p style={{ fontSize: 15, color: C.secondary, marginBottom: 28 }}>Tap to record your voice message</p>
             <button
               id="voice-record-btn"
               onClick={startRecording}
               style={{
                 width: 80, height: 80, borderRadius: '50%', background: C.accent, border: 'none',
-                cursor: 'pointer', fontSize: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: C.white, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto',
               }}
-            >🎙</button>
+            >
+              <Mic style={{ width: 32, height: 32 }} />
+            </button>
             <p style={{ marginTop: 16, fontSize: 13, color: C.secondary }}>Tap to record</p>
           </>
         )}
@@ -230,10 +246,12 @@ function VoiceScreen({ onBack, onCapture }) {
           <>
             <div style={{
               width: 80, height: 80, borderRadius: '50%', background: C.accent, border: 'none',
-              cursor: 'pointer', fontSize: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: C.white, display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 16px',
               boxShadow: `0 0 0 12px rgba(201,75,60,0.15)`,
-            }}>🎙</div>
+            }}>
+              <Mic style={{ width: 32, height: 32 }} />
+            </div>
             <p style={{ fontSize: 24, fontWeight: 700, color: C.accent, margin: '0 0 6px', fontVariantNumeric: 'tabular-nums' }}>{fmt(seconds)}</p>
             <p style={{ fontSize: 14, color: C.accent, margin: '0 0 24px', fontWeight: 600 }}>Recording…</p>
             <button
@@ -242,14 +260,19 @@ function VoiceScreen({ onBack, onCapture }) {
               style={{
                 background: C.primary, color: C.white, border: 'none', borderRadius: 8,
                 padding: '14px 28px', fontSize: 15, fontWeight: 600, cursor: 'pointer', minHeight: 52,
+                display: 'inline-flex', alignItems: 'center', gap: 8,
               }}
-            >Stop Recording</button>
+            >
+              <Square style={{ width: 16, height: 16, fill: C.white }} /> Stop Recording
+            </button>
           </>
         )}
 
         {state === 'done' && (
           <>
-            <div style={{ fontSize: 50, marginBottom: 16 }}>✅</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              <CheckCircle2 style={{ width: 48, height: 48, color: C.success }} />
+            </div>
             <p style={{ fontSize: 15, fontWeight: 600, color: C.success, marginBottom: 20 }}>{fmt(seconds)} recording</p>
             {audioURL && (
               <audio controls src={audioURL} style={{ width: '100%', marginBottom: 20, borderRadius: 6 }} />
@@ -299,14 +322,16 @@ function LocationScreen({ onBack, onCapture }) {
   return (
     <div>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.secondary, padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
-        ← Back
+        <ArrowLeft style={{ width: 16, height: 16 }} /> Back
       </button>
       <h2 style={{ fontSize: 22, fontWeight: 700, color: C.primary, margin: '0 0 20px' }}>Your Location</h2>
       <SafetyBanner />
 
       {state === 'idle' && (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <div style={{ fontSize: 56, marginBottom: 16 }}>📍</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <MapPin style={{ width: 56, height: 56, color: C.secondary }} />
+          </div>
           <p style={{ fontSize: 15, color: C.secondary, marginBottom: 24 }}>Share your location to help responders find you</p>
           <button
             id="location-detect-btn"
@@ -329,7 +354,9 @@ function LocationScreen({ onBack, onCapture }) {
 
       {state === 'loading' && (
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <Loader2 style={{ width: 40, height: 40, color: C.secondary, animation: 'spin 1s linear infinite' }} />
+          </div>
           <p style={{ fontSize: 15, color: C.secondary }}>Detecting location…</p>
         </div>
       )}
@@ -369,7 +396,9 @@ function LocationScreen({ onBack, onCapture }) {
 
       {state === 'error' && (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <div style={{ fontSize: 40, marginBottom: 14 }}>⚠️</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+            <AlertTriangle style={{ width: 44, height: 44, color: C.accent }} />
+          </div>
           <p style={{ fontSize: 15, color: C.secondary, marginBottom: 20 }}>Could not detect location. Please try again or enter manually.</p>
           <button onClick={getLocation} style={{ background: C.accent, color: C.white, border: 'none', borderRadius: 8, padding: '14px 24px', fontSize: 15, fontWeight: 600, cursor: 'pointer', marginBottom: 12, width: '100%', minHeight: 52 }}>Try Again</button>
           <button onClick={() => onCapture({ manual: true })} style={{ background: 'none', border: `1px solid ${C.border}`, borderRadius: 8, padding: '14px 24px', fontSize: 15, fontWeight: 600, cursor: 'pointer', width: '100%', color: C.primary, minHeight: 52 }}>Enter Manually</button>
@@ -386,7 +415,7 @@ function ReviewScreen({ data, onSubmit, onBack, status, errorMessage }) {
   return (
     <div>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.secondary, padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
-        ← Back
+        <ArrowLeft style={{ width: 16, height: 16 }} /> Back
       </button>
       <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: C.secondary, marginBottom: 16 }}>REPORT READY</p>
       <h2 style={{ fontSize: 22, fontWeight: 700, color: C.primary, margin: '0 0 20px' }}>Review your report</h2>
@@ -408,8 +437,9 @@ function ReviewScreen({ data, onSubmit, onBack, status, errorMessage }) {
             background: i % 2 === 0 ? C.white : C.surface,
           }}>
             <span style={{ fontSize: 14, color: C.secondary }}>{row.label}</span>
-            <span style={{ fontSize: 14, fontWeight: 600, color: row.ok && (row.value !== 'None') ? C.primary : C.secondary }}>
-              {row.ok && row.value !== 'None' ? '✓ ' : ''}{row.value}
+            <span style={{ fontSize: 14, fontWeight: 600, color: row.ok && (row.value !== 'None') ? C.primary : C.secondary, display: 'flex', alignItems: 'center', gap: 4 }}>
+              {row.ok && row.value !== 'None' && <Check style={{ width: 14, height: 14, color: C.success }} />}
+              {row.value}
             </span>
           </div>
         ))}
@@ -449,7 +479,9 @@ function ReviewScreen({ data, onSubmit, onBack, status, errorMessage }) {
 function SuccessScreen({ data }) {
   return (
     <div style={{ textAlign: 'center', padding: '20px 0' }}>
-      <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+        <CheckCircle2 style={{ width: 56, height: 56, color: C.success }} />
+      </div>
       <h2 style={{ fontSize: 26, fontWeight: 700, color: C.primary, margin: '0 0 16px' }}>Report received.</h2>
       <p style={{ fontSize: 15, color: C.secondary, lineHeight: 1.6, margin: '0 0 28px', maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
         Cascade is processing the information and adding it to the emergency intelligence system.
@@ -457,17 +489,32 @@ function SuccessScreen({ data }) {
       <div style={{
         background: C.white, border: `1px solid ${C.border}`, borderRadius: 8,
         padding: '16px 20px', marginBottom: 28, textAlign: 'left',
-        display: 'inline-block', minWidth: 200,
+        display: 'inline-block', minWidth: 220,
       }}>
-        {data.photo && <div style={{ fontSize: 14, padding: '4px 0', color: C.primary }}>📷 Photo <span style={{ color: C.success, fontWeight: 600 }}>✓</span></div>}
-        {data.voice && <div style={{ fontSize: 14, padding: '4px 0', color: C.primary }}>🎙 Voice <span style={{ color: C.success, fontWeight: 600 }}>✓</span></div>}
-        {data.location && <div style={{ fontSize: 14, padding: '4px 0', color: C.primary }}>📍 Location <span style={{ color: C.success, fontWeight: 600 }}>✓</span></div>}
+        {data.photo && (
+          <div style={{ fontSize: 14, padding: '4px 0', color: C.primary, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Camera style={{ width: 16, height: 16 }} /> Photo <Check style={{ width: 14, height: 14, color: C.success, marginLeft: 'auto' }} />
+          </div>
+        )}
+        {data.voice && (
+          <div style={{ fontSize: 14, padding: '4px 0', color: C.primary, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Mic style={{ width: 16, height: 16 }} /> Voice <Check style={{ width: 14, height: 14, color: C.success, marginLeft: 'auto' }} />
+          </div>
+        )}
+        {data.location && (
+          <div style={{ fontSize: 14, padding: '4px 0', color: C.primary, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <MapPin style={{ width: 16, height: 16 }} /> Location <Check style={{ width: 14, height: 14, color: C.success, marginLeft: 'auto' }} />
+          </div>
+        )}
       </div>
       <Link to="/" style={{
-        display: 'block', background: C.surface, color: C.primary, textDecoration: 'none',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        background: C.surface, color: C.primary, textDecoration: 'none',
         border: `1px solid ${C.border}`, borderRadius: 8, padding: '14px',
         fontSize: 15, fontWeight: 500,
-      }}>← Return to Home</Link>
+      }}>
+        <ArrowLeft style={{ width: 16, height: 16 }} /> Return to Home
+      </Link>
     </div>
   )
 }
