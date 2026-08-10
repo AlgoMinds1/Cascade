@@ -13,10 +13,20 @@ export default {
         amber: '#F59E0B',
         surface: '#FFFFFF',
         bg: '#FAFBFC',
+        // Cascade landing page / mobile portal tokens
+        'cascade-bg': '#F6F7F5',
+        'cascade-primary': '#17211F',
+        'cascade-secondary': '#596460',
+        'cascade-border': '#D9DEDA',
+        'cascade-surface': '#ECEFEC',
+        'cascade-accent': '#C94B3C',
+        'cascade-warning': '#B47A25',
+        'cascade-success': '#397A57',
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         display: ['Space Grotesk', 'sans-serif'],
+        plex: ['IBM Plex Sans', 'sans-serif'],
       },
       boxShadow: {
         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
