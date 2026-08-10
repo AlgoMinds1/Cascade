@@ -177,10 +177,6 @@ router.post('/simulate', async (req, res) => {
 
     const timer = setTimeout(async () => {
       try {
-        const { extractEntities } = await import('../agents/ExtractionAgent.js')
-        const { recomputeRoutes } = await import('../agents/RouteAgent.js')
-        const { computeImpact } = await import('../agents/ImpactAgent.js')
-
         const extracted = extractEntities(report.message)
         if (!extracted.entityId) return
 
