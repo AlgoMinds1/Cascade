@@ -109,22 +109,38 @@ export default function EntityLayer() {
         return (
           <div key={`road-group-${road.id}`}>
             {hasCoords ? (
-              <Polyline
-                positions={road.coords}
-                pathOptions={{
-                  color: isBlocked ? '#DC2626' : isBridge ? '#334155' : '#64748B',
-                  weight: isBridge ? 6 : 4,
-                  dashArray: isBlocked ? '8 5' : null,
-                  opacity: isBlocked ? 0.95 : 0.85
-                }}
-              >
-                <Popup>
-                  <div className="text-xs space-y-1">
-                    <div className="font-bold text-slate-900">{road.name} ({road.type.toUpperCase()})</div>
-                    <div>Status: <span className={`font-semibold ${isBlocked ? 'text-red-600' : 'text-emerald-600'}`}>{road.status.toUpperCase()}</span></div>
-                  </div>
-                </Popup>
-              </Polyline>
+              <>
+                {/* Pulse glow halo for blocked roads */}
+                {isBlocked && (
+                  <Polyline
+                    positions={road.coords}
+                    pathOptions={{
+                      color: '#DC2626',
+                      weight: 10,
+                      opacity: 0,
+                      className: 'blocked-road-halo'
+                    }}
+                  />
+                )}
+                <Polyline
+                  positions={road.coords}
+                  pathOptions={{
+                    color: isBlocked ? '#DC2626' : isBridge ? '#334155' : '#64748B',
+                    weight: isBridge ? 6 : 4,
+                    dashArray: isBlocked ? '8 5' : null,
+                    opacity: isBlocked ? 0.95 : 0.85,
+                    className: isBlocked ? 'blocked-road-line' : ''
+                  }}
+                >
+                  <Popup>
+                    <div className="text-xs space-y-1">
+                      <div className="font-bold text-slate-900">{road.name} ({road.type.toUpperCase()})</div>
+                      <div>Status: <span className={`font-semibold ${isBlocked ? 'text-red-600' : 'text-emerald-600'}`}>{road.status.toUpperCase()}</span></div>
+                      {isBlocked && <div className="pill bg-red-100 text-red-700 font-bold mt-1">BLOCKED — AI REROUTING</div>}
+                    </div>
+                  </Popup>
+                </Polyline>
+              </>
             ) : null}
 
             {/* Dedicated Bridge Arch / Blocked Icon at Midpoint */}

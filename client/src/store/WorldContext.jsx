@@ -7,6 +7,7 @@ export function WorldProvider({ children }) {
   const [alerts, setAlerts] = useState([])
   const [events, setEvents] = useState([])
   const [isConnected, setIsConnected] = useState(false)
+  const [simRunning, setSimRunning] = useState(false)
 
   const updateState = useCallback((snapshot) => {
     setWorldState(snapshot)
@@ -38,7 +39,9 @@ export function WorldProvider({ children }) {
         updateState,
         addAlert,
         addEvent,
-        clearAlert
+        clearAlert,
+        simRunning,
+        setSimRunning,
       }}
     >
       {children}

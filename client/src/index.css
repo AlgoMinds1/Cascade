@@ -9,6 +9,21 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', sans-serif;
   }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 99px;
+  }
 }
 
 @layer components {
@@ -27,4 +42,66 @@
   .pill {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
+  /* Sidebar section headers */
+  .sidebar-section-label {
+    @apply text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1;
+  }
+}
+
+@layer utilities {
+  /* Blocked road pulse ring for Leaflet markers */
+  .leaflet-marker-blocked {
+    animation: pulseRing 1.4s ease-out infinite;
+    border-radius: 50%;
+  }
+
+  /* Mesh gradient for empty states */
+  .bg-mesh {
+    background-image:
+      radial-gradient(at 40% 20%, hsla(217,100%,96%,0.7) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, hsla(207,100%,97%,0.6) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsla(355,60%,97%,0.5) 0px, transparent 50%);
+  }
+}
+
+/* Alert banner countdown bar */
+@keyframes shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* Blocked entity pulse ring (used on Leaflet marker wrappers) */
+@keyframes pulseRing {
+  0%   { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+/* Blocked road pulse animation on Leaflet polylines */
+.blocked-road-line {
+  animation: blockedDash 1.2s linear infinite;
+}
+@keyframes blockedDash {
+  to { stroke-dashoffset: -26; }
+}
+.blocked-road-halo {
+  animation: blockedHalo 1.5s ease-in-out infinite;
+}
+@keyframes blockedHalo {
+  0%, 100% { opacity: 0; stroke-width: 6px; }
+  50%       { opacity: 0.22; stroke-width: 14px; }
+}
+
+/* Leaflet popup style override */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px -4px rgba(0,0,0,0.12) !important;
+  border: 1px solid #e2e8f0;
+  padding: 0 !important;
+}
+.leaflet-popup-content {
+  margin: 10px 12px !important;
+}
+.leaflet-popup-tip-container {
+  display: none !important;
 }
