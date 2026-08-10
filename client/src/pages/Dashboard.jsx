@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useSocket } from '../hooks/useSocket.js'
 import { useWorldState } from '../hooks/useWorldState.js'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts.js'
@@ -10,11 +10,13 @@ import TeamStatus from '../components/TeamStatus.jsx'
 import EventLog from '../components/EventLog.jsx'
 import AlertBanner from '../components/AlertBanner.jsx'
 import SimulationController from '../components/SimulationController.jsx'
-import { Loader2, Wifi, WifiOff, Keyboard } from 'lucide-react'
+import FallbackDemoModal from '../components/FallbackDemoModal.jsx'
+import { Loader2, Wifi, WifiOff, Keyboard, Video } from 'lucide-react'
 
 export default function Dashboard() {
   useSocket()
   const { isReady, isConnected, blockedRoads, alerts } = useWorldState()
+  const [showFallback, setShowFallback] = useState(false)
   const simRef = useRef(null)
 
   // Keyboard shortcut handlers wired to SimulationController's imperative API
@@ -50,12 +52,22 @@ export default function Dashboard() {
 
           <div className="flex-1" />
 
-          {/* Keyboard shortcut hint */}
-          <div className="hidden md:flex items-center gap-1 text-[10px] text-slate-300">
-            <Keyboard className="w-3 h-3 text-slate-300" />
-            <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">S</kbd>
-            <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">Space</kbd>
-            <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">R</kbd>
+          {/* Fallback & Keyboard shortcut hints */}
+          <div className="hidden md:flex items-center gap-2">
+            <button
+              onClick={() => setShowFallback(true)}
+              className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition-colors"
+              title="Open Stage Fallback Video Demo"
+            >
+              <Video className="w-3 h-3 text-red-500" />
+              <span>Show Fallback</span>
+            </button>
+            <div className="flex items-center gap-1 text-[10px] text-slate-300">
+              <Keyboard className="w-3 h-3 text-slate-300" />
+              <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">S</kbd>
+              <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">Space</kbd>
+              <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-mono">R</kbd>
+            </div>
           </div>
         </div>
 
@@ -114,6 +126,9 @@ export default function Dashboard() {
           <EventLog />
         </div>
       </aside>
+
+      {/* Fallback Demo Modal */}
+      <FallbackDemoModal isOpen={showFallback} onClose={() => setShowFallback(false)} />
     </div>
   )
 }
