@@ -19,7 +19,7 @@ export default function DesignSystem() {
       {/* Color Tokens */}
       <section className="space-y-4">
         <h2 className="text-xl font-display font-semibold text-slate-800 flex items-center gap-2">
-          <span>🎨</span> Color Palette Tokens
+          Color Palette Tokens
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
           <div className="card p-3 space-y-2">
@@ -75,7 +75,7 @@ export default function DesignSystem() {
       {/* Typography Tokens */}
       <section className="space-y-4">
         <h2 className="text-xl font-display font-semibold text-slate-800 flex items-center gap-2">
-          <span>🔤</span> Typography
+          Typography
         </h2>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="card p-5 space-y-3">
@@ -109,7 +109,7 @@ export default function DesignSystem() {
       {/* Interactive Buttons */}
       <section className="space-y-4">
         <h2 className="text-xl font-display font-semibold text-slate-800 flex items-center gap-2">
-          <span>🔘</span> Action Buttons & Controls
+          Action Buttons & Controls
         </h2>
         <div className="card p-6 space-y-4">
           <div className="flex flex-wrap gap-4 items-center">
@@ -139,7 +139,7 @@ export default function DesignSystem() {
       {/* Badges & Status Pills */}
       <section className="space-y-4">
         <h2 className="text-xl font-display font-semibold text-slate-800 flex items-center gap-2">
-          <span>🏷️</span> Status Badges & Alerts
+          Status Badges & Alerts
         </h2>
         <div className="card p-6 space-y-4">
           <div className="flex flex-wrap gap-3 items-center">
@@ -152,13 +152,13 @@ export default function DesignSystem() {
               CRITICAL INCIDENT
             </span>
             <span className="pill bg-amber-50 text-amber-700 border border-amber-200">
-              ⚠️ OVERFLOW WARNING
+              OVERFLOW WARNING
             </span>
             <span className="pill bg-blue-50 text-intel border border-blue-200">
-              🔄 REROUTING ACTIVE
+              REROUTING ACTIVE
             </span>
             <span className="pill bg-purple-50 text-purple-700 border border-purple-200">
-              🚑 AMBULANCE EN ROUTE
+              AMBULANCE EN ROUTE
             </span>
             <span className="pill bg-slate-100 text-slate-700 border border-slate-200">
               IDLE RESCUE TEAM
@@ -170,7 +170,7 @@ export default function DesignSystem() {
       {/* Cards & Surfaces */}
       <section className="space-y-4">
         <h2 className="text-xl font-display font-semibold text-slate-800 flex items-center gap-2">
-          <span>📦</span> Card Surfaces & Shadows
+          Card Surfaces & Shadows
         </h2>
         <div className="grid md:grid-cols-3 gap-5">
           <div className="card p-5 hover:shadow-md transition-shadow space-y-3">

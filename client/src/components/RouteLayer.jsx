@@ -52,7 +52,7 @@ export default function RouteLayer() {
                   <Popup>
                     <div className="text-xs space-y-1">
                       <div className="font-bold text-red-600 flex items-center gap-1">
-                        <span>⛔</span> Obsolete Route Segment
+                        Obsolete Route Segment
                       </div>
                       <div className="text-slate-500">Route blocked by structural failure/incident.</div>
                     </div>
@@ -98,7 +98,7 @@ export default function RouteLayer() {
               <Popup>
                 <div className="text-xs space-y-1">
                   <div className="font-bold text-intel flex items-center gap-1">
-                    <span>🚑</span> {amb.callSign} Active Route Telemetry
+                    {amb.callSign} Active Route Telemetry
                   </div>
                   <div>Status: <span className="font-semibold text-slate-800">{amb.status.toUpperCase()}</span></div>
                   {amb.route.duration && (
@@ -116,7 +116,7 @@ export default function RouteLayer() {
                   )}
                   {isRerouted && (
                     <div className="pill bg-blue-100 text-intel font-semibold mt-1">
-                      🔄 REROUTED BYPASS ACTIVE
+                      REROUTED BYPASS ACTIVE
                     </div>
                   )}
                 </div>

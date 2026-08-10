@@ -1,4 +1,4 @@
-import { Shield, Truck, AlertCircle, CheckCircle } from 'lucide-react'
+import { Shield, Truck, AlertCircle, CheckCircle, Users } from 'lucide-react'
 import { useWorldState } from '../hooks/useWorldState.js'
 
 export default function TeamStatus() {
@@ -46,7 +46,7 @@ export default function TeamStatus() {
                       isDeployed ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-200 text-slate-700'
                     }`}
                   >
-                    👥
+                    <Users className="w-4 h-4" />
                   </div>
                   <div>
                     <span className="font-bold text-slate-800">{team.name}</span>
@@ -100,7 +100,7 @@ export default function TeamStatus() {
                       isEnroute ? 'bg-intel text-white shadow-sm' : 'bg-slate-200 text-slate-700'
                     }`}
                   >
-                    🚑
+                    <Truck className="w-4 h-4" />
                   </div>
                   <div>
                     <span className="font-bold text-slate-800">Unit {amb.callSign}</span>

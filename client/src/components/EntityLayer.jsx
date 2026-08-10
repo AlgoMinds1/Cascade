@@ -74,7 +74,7 @@ function AnimatedAmbulance({ amb }) {
       <Popup>
         <div className="text-xs space-y-1">
           <div className="font-bold text-intel flex items-center gap-1">
-            <span>🚑</span> Unit {amb.callSign}
+            Unit {amb.callSign}
           </div>
           <div>Status: <span className="font-semibold text-slate-800">{amb.status.toUpperCase()}</span></div>
           {amb.route?.duration && (
@@ -82,7 +82,7 @@ function AnimatedAmbulance({ amb }) {
           )}
           {amb.route?.rerouted && (
             <div className="pill bg-blue-100 text-intel font-semibold mt-1">
-              🔄 REROUTE ACTIVE
+              REROUTE ACTIVE
             </div>
           )}
         </div>

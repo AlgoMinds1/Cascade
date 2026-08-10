@@ -60,7 +60,7 @@ export default function Dashboard() {
             <div className="absolute top-3 left-3 z-[1000] flex gap-2 flex-wrap">
               {blockedRoads.map(r => (
                 <span key={r.id} className="pill bg-red-600 text-white shadow-lg">
-                  ⛔ {r.name} BLOCKED
+                  {r.name} BLOCKED
                 </span>
               ))}
             </div>
