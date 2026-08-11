@@ -171,4 +171,4 @@ Citizen Report (text)
 
 ## 📄 License
 
-MIT © 2024 — Built with ❤️ for disaster response hackathons.
+MIT © 2024 
