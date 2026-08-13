@@ -1,6 +1,6 @@
-# 🌊 Cascade — AI-Powered Disaster Command Platform
+# 🌊 Cascade — AI Powered Disaster Command Platform
 
-> Real-time disaster coordination powered by multi-agent AI. Built for hackathons, deployable in crisis.
+> Real time disaster coordination powered by multi-agent AI. Built for hackathons, deployable in crisis.
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green?logo=node.js)](https://nodejs.org)
 [![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://react.dev)
@@ -11,9 +11,9 @@
 
 ## 🧠 What is Cascade?
 
-Cascade is a real-time disaster response command center. When an incident is reported (flood, bridge collapse, road blockage), a pipeline of AI agents automatically:
+Cascade is a real time disaster response command center. When an incident is reported (flood, bridge collapse, road blockage), a pipeline of AI agents automatically:
 
-1. **Extracts** the affected location from natural-language text (ExtractionAgent)
+1. **Extracts** the affected location from natural language text (ExtractionAgent)
 2. **Recomputes** ambulance routes around blocked roads (RouteAgent → OSRM)
 3. **Assesses** hospital capacity impact and deploys rescue teams (ImpactAgent)
 4. **Broadcasts** the updated world state to all connected dashboards via WebSocket
@@ -37,37 +37,6 @@ Cascade/
 ├── start-osrm.sh            # OSRM Docker helper
 └── package.json             # Root orchestrator (concurrently)
 ```
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+
-- npm 9+
-- Docker (optional, for real routing via OSRM)
-
-### Install & Run
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/your-username/cascade.git
-cd cascade
-
-# 2. Install all dependencies
-npm install
-cd client && npm install && cd ..
-cd server && npm install && cd ..
-
-# 3. Start both client + server
-npm run dev
-```
-
-| Service | URL |
-|---|---|
-| Dashboard | http://localhost:5173 |
-| API Server | http://localhost:3001 |
-| OSRM (optional) | http://localhost:5000 |
 
 ---
 
