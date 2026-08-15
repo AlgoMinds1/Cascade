@@ -93,10 +93,42 @@ class WorldStateClass {
       ],
       events: [
         {
-          id: 'evt-init',
-          timestamp: new Date().toISOString(),
+          id: 'evt-init-1',
+          timestamp: new Date(Date.now() - 60000).toISOString(),
           type: 'SYSTEM_READY',
-          description: 'Cascade Command World State Engine initialized.',
+          description: 'Cascade Command Engine online • Graph routing active',
+          source: 'system',
+          affectedEntities: []
+        },
+        {
+          id: 'evt-init-2',
+          timestamp: new Date(Date.now() - 45000).toISOString(),
+          type: 'CORRIDOR_MONITOR',
+          description: 'Corridor telemetry synced: Road 17 & South Ave open',
+          source: 'system',
+          affectedEntities: ['road-17', 'road-south']
+        },
+        {
+          id: 'evt-init-3',
+          timestamp: new Date(Date.now() - 30000).toISOString(),
+          type: 'DISPATCH',
+          description: 'Ambulance A1 en route to City General • Units A2/A3 staged',
+          source: 'dispatch',
+          affectedEntities: ['amb-1']
+        },
+        {
+          id: 'evt-init-4',
+          timestamp: new Date(Date.now() - 15000).toISOString(),
+          type: 'TRIAGE',
+          description: 'City General (60% load) & Emergency Care telemetry active',
+          source: 'hospital',
+          affectedEntities: ['hosp-a', 'hosp-b']
+        },
+        {
+          id: 'evt-init-5',
+          timestamp: new Date().toISOString(),
+          type: 'MONITOR',
+          description: 'Incident ingestion stream active • Ready for field reports',
           source: 'system',
           affectedEntities: []
         }
@@ -128,7 +160,7 @@ class WorldStateClass {
       road.status = 'blocked'
       this.addEvent(
         'ROAD_BLOCKED',
-        `${road.name} (${road.type}) is now BLOCKED.`,
+        `${road.name} (${road.type}) blocked • Traffic suspended`,
         source,
         [roadId]
       )
@@ -146,7 +178,7 @@ class WorldStateClass {
       road.status = 'open'
       this.addEvent(
         'ROAD_OPENED',
-        `${road.name} is now OPEN for traffic.`,
+        `${road.name} reopened • Normal flow restored`,
         source,
         [roadId]
       )
@@ -218,7 +250,7 @@ class WorldStateClass {
       amb.status = 'enroute'
       this.addEvent(
         'REROUTE',
-        `Ambulance ${amb.callSign} rerouted via bypass (ETA: ${Math.round(route.duration / 60)}m).`,
+        `Ambulance ${amb.callSign} rerouted via bypass (ETA: ${Math.round(route.duration / 60)}m)`,
         'system',
         [ambId]
       )
@@ -239,7 +271,7 @@ class WorldStateClass {
 
       this.addEvent(
         'HOSPITAL_UPDATE',
-        `${hosp.name} load updated to ${loadPercent}% (${totalOccupied}/${hosp.capacity.total}).`,
+        `${hosp.name} triage: ${totalOccupied}/${hosp.capacity.total} beds (${loadPercent}% load)`,
         'system',
         [hospId]
       )
@@ -256,7 +288,7 @@ class WorldStateClass {
       team.assignedTask = task
       this.addEvent(
         'TEAM_DEPLOYED',
-        `Rescue Team ${team.name} deployed to ${task}.`,
+        `Team ${team.name} deployed to ${task}`,
         'system',
         [teamId]
       )

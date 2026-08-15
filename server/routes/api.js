@@ -94,9 +94,23 @@ router.post('/report', async (req, res) => {
 
   const world = req.world
   const changes = []
+  const srcLabel = (source || 'citizen').toUpperCase()
+
+  // Log incoming report into event stream
+  if (extracted.type === 'FIRE') {
+    world.addEvent('FIRE', `[${srcLabel}] Fire report on ${extracted.entityId}: "${message}"`, source || 'citizen', [extracted.entityId])
+    changes.push({ action: 'LOG_FIRE', target: extracted.entityId })
+  } else if (extracted.type === 'RESCUE') {
+    world.addEvent('RESCUE', `[${srcLabel}] Rescue needed at ${extracted.entityId}: "${message}"`, source || 'citizen', [extracted.entityId])
+    changes.push({ action: 'LOG_RESCUE', target: extracted.entityId })
+  } else if (extracted.type === 'ROAD_BLOCKED') {
+    world.addEvent('INCIDENT_REPORT', `[${srcLabel}] Report logged: "${message}"`, source || 'citizen', [extracted.entityId])
+  } else {
+    world.addEvent('INCIDENT_REPORT', `[${srcLabel}] ${message}`, source || 'citizen', [extracted.entityId])
+  }
 
   if (extracted.type === 'ROAD_BLOCKED') {
-    world.blockRoad(extracted.entityId)
+    world.blockRoad(extracted.entityId, source || 'report')
     changes.push({ action: 'BLOCK_ROAD', target: extracted.entityId })
 
     const routeResult = await recomputeRoutes(world.getState(), extracted.entityId)
@@ -130,8 +144,8 @@ router.post('/report', async (req, res) => {
   req.io.emit('state:updated', newState)
   req.io.emit('alert', {
     id: `alert-${Date.now()}`,
-    level: 'critical',
-    message: `CRITICAL: Incident reported on ${extracted.entityId} — Multi-agent cascade active.`
+    level: extracted.type === 'ROAD_BLOCKED' ? 'critical' : 'warning',
+    message: `[${srcLabel}] Incident logged on ${extracted.entityId} — Protocol active.`
   })
 
   res.json({ success: true, extracted, changes, state: newState })
@@ -178,10 +192,20 @@ router.post('/simulate', async (req, res) => {
     const timer = setTimeout(async () => {
       try {
         const extracted = extractEntities(report.message)
-        if (!extracted.entityId) return
+        const srcLabel = (report.source || 'simulation').toUpperCase()
 
-        if (extracted.type === 'ROAD_BLOCKED') {
-          world.blockRoad(extracted.entityId)
+        if (extracted.type === 'FIRE') {
+          world.addEvent('FIRE', `[${srcLabel}] Fire report on ${extracted.entityId || 'corridor'}: "${report.message}"`, report.source || 'simulation', [extracted.entityId].filter(Boolean))
+        } else if (extracted.type === 'RESCUE') {
+          world.addEvent('RESCUE', `[${srcLabel}] Rescue needed at ${extracted.entityId || 'corridor'}: "${report.message}"`, report.source || 'simulation', [extracted.entityId].filter(Boolean))
+        } else if (extracted.type === 'ROAD_BLOCKED') {
+          world.addEvent('INCIDENT_REPORT', `[${srcLabel}] ${report.label}: "${report.message}"`, report.source || 'simulation', [extracted.entityId].filter(Boolean))
+        } else {
+          world.addEvent('INCIDENT_REPORT', `[${srcLabel}] ${report.message}`, report.source || 'simulation', [extracted.entityId].filter(Boolean))
+        }
+
+        if (extracted.entityId && extracted.type === 'ROAD_BLOCKED') {
+          world.blockRoad(extracted.entityId, report.source || 'simulation')
           const routeResult = await recomputeRoutes(world.getState(), extracted.entityId)
           const impactResult = computeImpact(world.getState(), extracted.entityId, routeResult)
 

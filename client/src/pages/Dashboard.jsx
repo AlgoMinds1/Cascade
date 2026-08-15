@@ -98,31 +98,27 @@ export default function Dashboard() {
       </div>
 
       {/* ── RIGHT — Sidebar ─────────────────────────────────── */}
-      <aside className="w-80 sm:w-[380px] lg:w-[420px] xl:w-[440px] flex-shrink-0 flex flex-col bg-slate-50/80 overflow-y-auto">
+      <aside className="w-80 sm:w-[380px] lg:w-[420px] xl:w-[440px] flex-shrink-0 flex flex-col bg-slate-50/80 overflow-y-auto divide-y divide-slate-200">
 
         {/* Live Alerts */}
         {alerts.length > 0 && (
-          <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-slate-200 bg-white">
-            <p className="sidebar-section-label mb-2">Live Alerts</p>
+          <div className="flex-shrink-0 px-4 pt-3 pb-2.5 bg-white">
             <AlertBanner mode="inline" />
           </div>
         )}
 
         {/* Hospital Status */}
-        <div className="px-4 pt-4 pb-3 border-b border-slate-200">
-          <p className="sidebar-section-label mb-2">Hospital Status</p>
+        <div className="px-4 pt-3 pb-2.5 flex-shrink-0">
           <HospitalCard />
         </div>
 
         {/* Active Units */}
-        <div className="px-4 pt-4 pb-3 border-b border-slate-200">
-          <p className="sidebar-section-label mb-2">Active Units</p>
+        <div className="px-4 pt-3 pb-2.5 flex-shrink-0">
           <TeamStatus />
         </div>
 
         {/* Event Log */}
-        <div className="px-4 pt-4 pb-4 flex-1 flex flex-col min-h-0">
-          <p className="sidebar-section-label mb-2">Event Log</p>
+        <div className="px-4 pt-3 pb-4 flex-1 min-h-[320px] flex flex-col">
           <EventLog />
         </div>
       </aside>
